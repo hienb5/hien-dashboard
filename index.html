@@ -7,6 +7,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<script>(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'&&t!=='bw'){t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
 <link rel="stylesheet" href="style.css">
 </head><body>
 
@@ -18,6 +19,11 @@
   <div class="right">
     <div id="status" class="status"></div>
     <div class="btns">
+      <div class="themes" role="group" aria-label="Giao diện">
+        <button type="button" data-theme-btn="light" aria-pressed="false">Sáng</button>
+        <button type="button" data-theme-btn="dark" aria-pressed="false">Tối</button>
+        <button type="button" data-theme-btn="bw" aria-pressed="false">Đen trắng</button>
+      </div>
       <button id="btnRefresh" class="ghost" title="Làm mới">Làm mới</button>
       <button id="btnSettings" class="ghost" title="Chọn lịch hiển thị">Lịch</button>
       <button id="btnAuth" class="primary">Đăng nhập Google</button>
@@ -27,30 +33,16 @@
 
 <div id="banner" class="banner" hidden></div>
 
-<main class="grid">
-  <section class="card" id="col-personal">
-    <h2>Cá nhân <span id="n-personal"></span></h2>
-    <div id="tasks-personal"></div>
-    <form class="add" data-group="personal"><input type="text" placeholder="Thêm việc…" aria-label="Thêm việc cá nhân" required><input type="date" aria-label="Hạn"><button>Thêm</button></form>
-
-    <div class="sub">Lịch hôm nay</div>
+<main class="grid" id="grid">
+  <section class="card" id="col-events">
+    <h2>Lịch</h2>
+    <div class="sub first">Hôm nay</div>
     <div id="ev-today"></div>
     <div class="sub">Ngày mai</div>
     <div id="ev-tomorrow"></div>
-    <form class="quick" id="quickAdd"><input type="text" placeholder="Thêm sự kiện nhanh, vd: Họp 14h ngày mai" aria-label="Thêm sự kiện nhanh" required><button>Thêm</button></form>
+    <form class="quick" id="quickAdd"><input type="text" placeholder="Sự kiện nhanh: Họp 14h mai" aria-label="Thêm sự kiện nhanh" required><button>Thêm</button></form>
   </section>
-
-  <section class="card" id="col-cangvu">
-    <h2>Cảng vụ <span id="n-cangvu"></span></h2>
-    <div id="tasks-cangvu"></div>
-    <form class="add" data-group="cangvu"><input type="text" placeholder="Thêm việc Cảng vụ…" aria-label="Thêm việc Cảng vụ" required><input type="date" aria-label="Hạn"><button>Thêm</button></form>
-  </section>
-
-  <section class="card" id="col-hienvinh">
-    <h2>Hiển Vinh <span id="n-hienvinh"></span></h2>
-    <div id="tasks-hienvinh"></div>
-    <form class="add" data-group="hienvinh"><input type="text" placeholder="Thêm việc Hiển Vinh…" aria-label="Thêm việc Hiển Vinh" required><input type="date" aria-label="Hạn"><button>Thêm</button></form>
-  </section>
+  <div id="lists" class="lists"></div>
 </main>
 
 <footer id="foot"></footer>

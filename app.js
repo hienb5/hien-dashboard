@@ -6,17 +6,13 @@ var SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.google
 var TASKS = 'https://tasks.googleapis.com/tasks/v1';
 var CAL = 'https://www.googleapis.com/calendar/v3';
 
-// Tên danh sách Google Tasks tương ứng với từng khối. Các danh sách khác gom vào "Cá nhân".
-var GROUPS = {
-  cangvu: 'Cảng vụ',
-  hienvinh: 'Hiển Vinh'
-};
 var REFRESH_MS = 5 * 60 * 1000;
 
 var $ = function (id) { return document.getElementById(id); };
 var token = null;          // {value, exp}
 var tokenClient = null;
 var state = { lists: [], tasks: {}, events: [], at: null, offline: false };
+var drafts = {};   // chữ đang gõ dở trong ô thêm việc, giữ lại khi trang tự làm mới
 var busy = false;
 
 // ---------- tiện ích ----------
@@ -39,6 +35,27 @@ function banner(msg, isErr) {
   b.textContent = msg;
   b.className = 'banner' + (isErr ? ' err' : '');
   b.hidden = false;
+}
+
+// ---------- giao diện: sáng / tối / đen trắng ----------
+var THEME_COLORS = { light: '#1f6f58', dark: '#0f1211', bw: '#ffffff' };
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  var m = document.querySelector('meta[name=theme-color]');
+  if (m) m.setAttribute('content', THEME_COLORS[t] || '#ffffff');
+  Array.prototype.forEach.call(document.querySelectorAll('[data-theme-btn]'), function (b) {
+    b.setAttribute('aria-pressed', b.getAttribute('data-theme-btn') === t ? 'true' : 'false');
+  });
+}
+function initThemes() {
+  applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
+  Array.prototype.forEach.call(document.querySelectorAll('[data-theme-btn]'), function (b) {
+    b.onclick = function () {
+      var t = b.getAttribute('data-theme-btn');
+      try { localStorage.setItem('theme', t); } catch (e) {}
+      applyTheme(t);
+    };
+  });
 }
 
 // ---------- đồng hồ ----------
@@ -188,25 +205,9 @@ function refresh() {
   }).then(function () { busy = false; });
 }
 
-// ---------- phân nhóm ----------
-function listFor(group) {
-  if (group === 'personal') {
-    // danh sách mặc định: danh sách đầu tiên không thuộc khối khác
-    var names = Object.keys(GROUPS).map(function (k) { return GROUPS[k]; });
-    for (var i = 0; i < state.lists.length; i++) if (names.indexOf(state.lists[i].title) < 0) return state.lists[i];
-    return null;
-  }
-  for (var j = 0; j < state.lists.length; j++) if (state.lists[j].title === GROUPS[group]) return state.lists[j];
-  return null;
-}
-function itemsFor(group) {
-  var names = Object.keys(GROUPS).map(function (k) { return GROUPS[k]; });
-  var out = [];
-  state.lists.forEach(function (l) {
-    var isGroupList = names.indexOf(l.title) >= 0;
-    var take = group === 'personal' ? !isGroupList : l.title === GROUPS[group];
-    if (take) (state.tasks[l.id] || []).forEach(function (t) { out.push({ list: l.id, task: t }); });
-  });
+// ---------- hiển thị danh sách việc (mỗi danh sách Google Tasks là một khối) ----------
+function itemsFor(listId) {
+  var out = (state.tasks[listId] || []).map(function (t) { return { list: listId, task: t }; });
   out.sort(function (a, b) {
     var da = a.task.due ? a.task.due.slice(0, 10) : '9999', db = b.task.due ? b.task.due.slice(0, 10) : '9999';
     if (da !== db) return da < db ? -1 : 1;
@@ -215,7 +216,6 @@ function itemsFor(group) {
   return out;
 }
 
-// ---------- hiển thị ----------
 function chipFor(due) {
   if (!due) return null;
   var d = due.slice(0, 10), t = todayStr();
@@ -224,33 +224,58 @@ function chipFor(due) {
   return el('span', 'chip', d.slice(8, 10) + '/' + d.slice(5, 7));
 }
 
-function renderTasks(group) {
-  var box = $('tasks-' + group);
-  box.textContent = '';
-  var items = itemsFor(group);
-  $('n-' + group).textContent = items.length ? items.length + ' việc' : '';
-  var missing = group !== 'personal' && !listFor(group) && state.lists.length;
-  if (missing) {
-    var msg = el('div', 'empty', 'Chưa có danh sách "' + GROUPS[group] + '" trong Google Tasks. ');
-    var b = el('button', '', 'Tạo danh sách');
-    b.onclick = function () { createList(group); };
-    msg.appendChild(b);
-    box.appendChild(msg);
-    return;
-  }
-  if (!items.length) { box.appendChild(el('div', 'empty', token ? 'Không có việc nào.' : '—')); return; }
+function buildListCard(l) {
+  var card = el('section', 'card');
+  var items = itemsFor(l.id);
+  var h = el('h2', '', l.title || '(không tên)');
+  h.appendChild(el('span', '', items.length ? items.length + ' việc' : ''));
+  card.appendChild(h);
+
+  var box = el('div');
+  if (!items.length) box.appendChild(el('div', 'empty', 'Không có việc nào.'));
   items.forEach(function (it) {
     var row = el('div', 'row');
-    var cb = el('input', 'chk'); cb.type = 'checkbox'; cb.title = 'Đánh dấu xong'; cb.setAttribute('aria-label', 'Đánh dấu xong: ' + it.task.title);
+    var cb = el('input', 'chk'); cb.type = 'checkbox'; cb.title = 'Đánh dấu xong';
+    cb.setAttribute('aria-label', 'Đánh dấu xong: ' + it.task.title);
     cb.onchange = function () { completeTask(it, row); };
-    var t = el('span', 't', it.task.title || '(không tên)');
-    row.appendChild(cb); row.appendChild(t);
+    row.appendChild(cb);
+    row.appendChild(el('span', 't', it.task.title || '(không tên)'));
     var chip = chipFor(it.task.due); if (chip) row.appendChild(chip);
     var del = el('button', 'del', '×'); del.title = 'Xoá việc'; del.setAttribute('aria-label', 'Xoá: ' + it.task.title);
     del.onclick = function () { deleteTask(it, row); };
     row.appendChild(del);
     box.appendChild(row);
   });
+  card.appendChild(box);
+
+  var f = el('form', 'add');
+  var ti = el('input'); ti.type = 'text'; ti.required = true; ti.placeholder = 'Thêm việc…'; ti.setAttribute('aria-label', 'Thêm việc vào ' + l.title);
+  var di = el('input'); di.type = 'date'; di.setAttribute('aria-label', 'Hạn');
+  var bt = el('button', '', 'Thêm');
+  var dr = drafts[l.id] || {};
+  ti.value = dr.t || ''; di.value = dr.d || '';
+  ti.oninput = di.oninput = function () { drafts[l.id] = { t: ti.value, d: di.value }; };
+  f.appendChild(ti); f.appendChild(di); f.appendChild(bt);
+  f.onsubmit = function (ev) {
+    ev.preventDefault();
+    var title = ti.value.trim(); if (!title) return;
+    addTask(l.id, title, di.value).then(function (ok) { if (ok) { drafts[l.id] = {}; render(); } });
+  };
+  card.appendChild(f);
+  return card;
+}
+
+function renderLists() {
+  var box = $('lists');
+  box.textContent = '';
+  if (!state.lists.length && token) {
+    var c = el('section', 'card');
+    c.appendChild(el('h2', '', 'Việc cần làm'));
+    c.appendChild(el('div', 'empty', 'Chưa có danh sách nào trong Google Tasks.'));
+    box.appendChild(c);
+    return;
+  }
+  state.lists.forEach(function (l) { box.appendChild(buildListCard(l)); });
 }
 
 function evTimeLabel(e) {
@@ -279,7 +304,7 @@ function renderEvents(boxId, day) {
 }
 
 function render() {
-  ['personal', 'cangvu', 'hienvinh'].forEach(renderTasks);
+  renderLists();
   renderEvents('ev-today', todayStr());
   renderEvents('ev-tomorrow', tomorrowStr());
   if (state.at) {
@@ -308,20 +333,14 @@ function deleteTask(it, row) {
     .then(function () { removeFromState(it); render(); })
     .catch(function (e) { row.classList.remove('gone'); banner('Không xoá được: ' + (e && e.message || 'lỗi mạng'), true); });
 }
-function addTask(group, title, date) {
-  var l = listFor(group);
-  if (!l) { banner('Chưa có danh sách cho khối này trong Google Tasks.', true); return Promise.resolve(); }
+function addTask(listId, title, date) {
   var body = { title: title };
   if (date) body.due = date + 'T00:00:00.000Z';
-  return api('POST', TASKS + '/lists/' + encodeURIComponent(l.id) + '/tasks', body).then(function (t) {
-    (state.tasks[l.id] = state.tasks[l.id] || []).push(t);
+  return api('POST', TASKS + '/lists/' + encodeURIComponent(listId) + '/tasks', body).then(function (t) {
+    (state.tasks[listId] = state.tasks[listId] || []).push(t);
     save('cache', state);
-    render();
-  }).catch(function (e) { banner('Không thêm được: ' + (e && e.message || 'lỗi mạng'), true); });
-}
-function createList(group) {
-  api('POST', TASKS + '/users/@me/lists', { title: GROUPS[group] }).then(function () { refresh(); })
-    .catch(function (e) { banner('Không tạo được danh sách: ' + (e && e.message || 'lỗi mạng'), true); });
+    return true;
+  }).catch(function (e) { banner('Không thêm được: ' + (e && e.message || 'lỗi mạng'), true); return false; });
 }
 function quickAdd(text) {
   return api('POST', CAL + '/calendars/primary/events/quickAdd?text=' + encodeURIComponent(text)).then(function () { return refresh(); })
@@ -357,6 +376,7 @@ function openSettings() {
 
 // ---------- khởi động ----------
 function init() {
+  initThemes();
   tick(); setInterval(tick, 15000);
   restoreToken();
   var cached = load('cache', null);
@@ -366,15 +386,6 @@ function init() {
   $('btnSettings').onclick = openSettings;
   $('btnAuth').onclick = function () { if (token || localStorage.getItem('signedIn') === '1' && $('btnAuth').textContent === 'Đăng xuất') signOut(); else signIn(); };
 
-  Array.prototype.forEach.call(document.querySelectorAll('form.add'), function (f) {
-    f.onsubmit = function (ev) {
-      ev.preventDefault();
-      var inputs = f.querySelectorAll('input');
-      var title = inputs[0].value.trim();
-      if (!title) return;
-      addTask(f.getAttribute('data-group'), title, inputs[1].value).then(function () { inputs[0].value = ''; inputs[1].value = ''; });
-    };
-  });
   $('quickAdd').onsubmit = function (ev) {
     ev.preventDefault();
     var i = $('quickAdd').querySelector('input');
