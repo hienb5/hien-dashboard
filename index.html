@@ -55,13 +55,15 @@
     <main class="grid" id="grid">
       <section class="card sm notes" id="cardNotes" data-key="notes">
         <h2><span class="ttl">Ghi chú</span></h2>
-        <div id="notesBody"></div>
+        <div id="notesBody" class="cb"></div>
+        <div id="notesAdd"></div>
       </section>
     </main>
   </section>
 
   <section class="card sm" id="cardWeek">
     <h2><span class="ttl">Việc trong tuần</span>
+      <form class="quick" id="quickAdd"><input type="text" placeholder="Thêm sự kiện nhanh: Họp 14h mai" aria-label="Thêm sự kiện nhanh" required><button>Thêm</button></form>
       <span class="tabs" id="weekTabs" role="group" aria-label="Khoảng thời gian">
         <button type="button" data-mode="week" aria-pressed="false">Tuần này</button>
         <button type="button" data-mode="7" aria-pressed="false">7 ngày tới</button>
@@ -69,7 +71,6 @@
       </span>
     </h2>
     <div id="weekBody" class="wk"></div>
-    <form class="quick" id="quickAdd"><input type="text" placeholder="Thêm sự kiện nhanh: Họp 14h mai" aria-label="Thêm sự kiện nhanh" required><button>Thêm</button></form>
   </section>
 </div>
 
