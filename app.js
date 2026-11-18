@@ -118,8 +118,13 @@ function lunarText(n) {
   var l = lunarOf(n.getDate(), n.getMonth() + 1, n.getFullYear());
   return 'Âm lịch: ' + l.d + '/' + l.m + (l.leap ? ' nhuận' : '') + ' · năm ' + CAN[(l.y + 6) % 10] + ' ' + CHI[(l.y + 8) % 12];
 }
+var lateSig = null;
 function tick() {
   var n = new Date();
+  if (state && state.at) {
+    var sg = allTaskItems().filter(isLateIt).length;
+    if (lateSig !== null && sg !== lateSig) { lateSig = sg; setTimeout(render, 0); } else lateSig = sg;
+  }
   $('clock').textContent = pad(n.getHours()) + ':' + pad(n.getMinutes());
   $('date').textContent = DAYS[n.getDay()] + ', ' + pad(n.getDate()) + '/' + pad(n.getMonth() + 1) + '/' + n.getFullYear();
   if ($('lunar')) $('lunar').textContent = lunarText(n);
@@ -234,7 +239,14 @@ function fetchEvents() {
     return api('GET', CAL + '/calendars/' + encodeURIComponent(id) + '/events' + q).then(function (r) {
       return (r.items || []).filter(function (e) { return e.status !== 'cancelled' && !(e.extendedProperties && e.extendedProperties.private && e.extendedProperties.private.hdTask); });
     }).catch(function (e) { if (e && e.code === 404) return []; throw e; });
-  })).then(function (arr) { return [].concat.apply([], arr); });
+  })).then(function (arr) {
+    var seen = {}, out = [];
+    [].concat.apply([], arr).forEach(function (e) {
+      var k = (e.iCalUID || e.id) + '|' + ((e.start && (e.start.dateTime || e.start.date)) || '');
+      if (!seen[k]) { seen[k] = 1; out.push(e); }
+    });
+    return out;
+  });
 }
 
 function fetchTasks() {
@@ -315,11 +327,18 @@ function itemsFor(listId) {
   return out;
 }
 
-function chipFor(due) {
+function nowHM() { var n = new Date(); return pad(n.getHours()) + ':' + pad(n.getMinutes()); }
+function isLateIt(it) {
+  var d = dueOf(it), t = todayStr(); if (!d) return false;
+  if (d < t) return true;
+  if (d === t) { var tm = tParse(it.task).time; return !!tm && tm < nowHM(); }
+  return false;
+}
+function chipFor(due, task) {
   if (!due) return null;
   var d = due.slice(0, 10), t = todayStr();
   if (d < t) return el('span', 'chip late', 'Quá hạn');
-  if (d === t) return el('span', 'chip today', 'Hôm nay');
+  if (d === t) { var tm = task && tParse(task).time; if (tm && tm < nowHM()) return el('span', 'chip late', 'Quá giờ'); return el('span', 'chip today', 'Hôm nay'); }
   return el('span', 'chip', d.slice(8, 10) + '/' + d.slice(5, 7));
 }
 
@@ -343,7 +362,7 @@ function buildListCard(l) {
     cb.onchange = function () { completeTask(it, row); };
     row.appendChild(cb);
     var ts = el('span', 't'); tSet(ts, it.task); ts.title = 'Bấm để đổi ngày / giờ'; ts.onclick = function (ev) { ev.stopPropagation(); openEdit(ts, it); }; row.appendChild(ts);
-    var chip = chipFor(it.task.due); if (chip) row.appendChild(chip);
+    var chip = chipFor(it.task.due, it.task); if (chip) row.appendChild(chip);
     var del = el('button', 'del', '×'); del.title = 'Xoá việc'; del.setAttribute('aria-label', 'Xoá: ' + it.task.title);
     del.onclick = function () { deleteTask(it, row); };
     row.appendChild(del);
@@ -542,7 +561,7 @@ function taskRow(it, cls, withChip) {
   if (withChip) {
     var n = daysBetween(dueOf(it), todayStr());
     var dd = dueOf(it);
-    row.appendChild(el('span', 'chip', n > 60 ? dd.slice(8, 10) + '/' + dd.slice(5, 7) + '/' + dd.slice(0, 4) : 'Quá ' + n + ' ngày'));
+    row.appendChild(el('span', 'chip', n === 0 ? 'Quá giờ' : n > 60 ? dd.slice(8, 10) + '/' + dd.slice(5, 7) + '/' + dd.slice(0, 4) : 'Quá ' + n + ' ngày'));
   }
   return row;
 }
@@ -551,10 +570,11 @@ function renderUrgent() {
   var box = $('urgentBody'); box.textContent = '';
   var t = todayStr();
   var items = allTaskItems();
-  var late = items.filter(function (it) { var d = dueOf(it); return d && d < t; })
-    .sort(function (a, b) { return dueOf(a) < dueOf(b) ? -1 : 1; });
-  var today = items.filter(function (it) { return dueOf(it) === t; });
+  var late = items.filter(isLateIt)
+    .sort(function (a, b) { var da = dueOf(a), db = dueOf(b); if (da !== db) return da < db ? -1 : 1; return (tParse(a.task).time || '') < (tParse(b.task).time || '') ? -1 : 1; });
+  var today = items.filter(function (it) { return dueOf(it) === t && !isLateIt(it); });
   var evs = evSorted(t);
+  lateSig = late.length;
 
   var c1 = el('div', 'ucol'); c1.appendChild(el('div', 'uh late', 'Quá hạn · ' + late.length));
   if (!late.length) c1.appendChild(el('div', 'uempty', state.at ? 'Không có việc quá hạn.' : '—'));
@@ -880,8 +900,8 @@ function renderIdle() {
     w.appendChild(fc);
   }
   var t = todayStr(), items = allTaskItems();
-  var late = items.filter(function (it) { var d = dueOf(it); return d && d < t; }).sort(function (a, b) { return dueOf(a) < dueOf(b) ? -1 : 1; });
-  var todayT = items.filter(function (it) { return dueOf(it) === t; });
+  var late = items.filter(isLateIt).sort(function (a, b) { var da = dueOf(a), db = dueOf(b); if (da !== db) return da < db ? -1 : 1; return (tParse(a.task).time || '') < (tParse(b.task).time || '') ? -1 : 1; });
+  var todayT = items.filter(function (it) { return dueOf(it) === t && !isLateIt(it); });
   var evs = evSorted(t);
   var secL = $('iLate'), secT = $('iToday'), secN = $('iNext');
   secL.querySelector('h3').textContent = 'Quá hạn' + (late.length ? ' · ' + late.length : '');
@@ -899,7 +919,7 @@ function renderIdle() {
   secL.classList.toggle('empty', !late.length);
   fitIdleList(secL.querySelector('.i-list'), late.map(function (it) {
     var n = daysBetween(dueOf(it), t);
-    return iLine('late', [el('i', 'dot'), el('span', 'i-t', it.task.title || '(không tên)'), el('span', 'i-tag', abbr(it.listTitle)), el('span', 'i-late', n > 60 ? 'từ lâu' : 'quá ' + n + ' ngày')]);
+    return iLine('late', [el('i', 'dot'), el('span', 'i-t', it.task.title || '(không tên)'), el('span', 'i-tag', abbr(it.listTitle)), el('span', 'i-late', n === 0 ? 'quá giờ' : n > 60 ? 'từ lâu' : 'quá ' + n + ' ngày')]);
   }), more);
   // hôm nay
   var tn = evs.map(function (e) {
@@ -997,7 +1017,7 @@ function setReminder(taskId, text, date, time) {
   function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':00'; }
   var body = {
     summary: text || '(việc)', start: { dateTime: iso(st), timeZone: TZ }, end: { dateTime: iso(en), timeZone: TZ },
-    reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 15 }] },
+    reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: getLead() }] },
     extendedProperties: { private: { hdTask: taskId } }
   };
   return removeReminder(taskId).then(function () { return api('POST', CAL + '/calendars/primary/events', body); })
@@ -1031,6 +1051,7 @@ function timeBox(cur, onChange) {
   box.appendChild(lst);
   var clr = el('button', 'tpc', 'Bỏ giờ'); clr.type = 'button'; clr.onclick = function () { cur = ''; inp.value = ''; mark(); onChange(''); };
   box.appendChild(clr);
+  box.appendChild(leadSelect(getLead(), function (m) { save('lead', m); }));
   function mark() { Array.prototype.forEach.call(lst.children, function (b) { b.setAttribute('aria-pressed', b.textContent === cur ? 'true' : 'false'); }); }
   mark();
   return box;
@@ -1092,8 +1113,21 @@ function addTask(listId, title, date, time) {
     return true;
   }).catch(function (e) { banner('Không thêm được: ' + (e && e.message || 'lỗi mạng'), true); return false; });
 }
+var LEADS = [5, 10, 15, 30, 60];
+function getLead() { var v = +load('lead', 15); return LEADS.indexOf(v) >= 0 ? v : 15; }
+function getQLead() { var v = +load('qlead', 30); return LEADS.indexOf(v) >= 0 ? v : 30; }
+function leadSelect(cur, onChange) {
+  var s = el('select', 'lead'); s.title = 'Nhắc trước bao nhiêu phút'; s.setAttribute('aria-label', 'Nhắc trước');
+  LEADS.forEach(function (m) { var o = el('option', '', '🔔 ' + (m >= 60 ? '1 giờ' : m + ' phút')); o.value = m; if (m === cur) o.selected = true; s.appendChild(o); });
+  s.onchange = function () { onChange(+s.value); };
+  return s;
+}
+var quickBusy = false;
 function quickAdd(text) {
-  return api('POST', CAL + '/calendars/primary/events/quickAdd?text=' + encodeURIComponent(text)).then(function () { return refresh(); })
+  var lead = getQLead();
+  return api('POST', CAL + '/calendars/primary/events/quickAdd?text=' + encodeURIComponent(text)).then(function (ev) {
+    if (ev && ev.id) return api('PATCH', CAL + '/calendars/primary/events/' + encodeURIComponent(ev.id), { reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: lead }] } }).catch(function () {});
+  }).then(function () { return refresh(); })
     .catch(function (e) { banner('Không thêm được sự kiện: ' + (e && e.message || 'lỗi mạng'), true); });
 }
 
@@ -1153,12 +1187,24 @@ function init() {
   $('btnSettings').onclick = openSettings;
   $('btnAuth').onclick = function () { if (token || localStorage.getItem('signedIn') === '1' && $('btnAuth').classList.contains('icon')) signOut(); else signIn(); };
 
-  $('quickAdd').onsubmit = function (ev) {
-    ev.preventDefault();
-    var i = $('quickAdd').querySelector('input');
-    var t = i.value.trim(); if (!t) return;
-    quickAdd(t).then(function () { i.value = ''; });
-  };
+  (function () {
+    var f = $('quickAdd'), i = f.querySelector('input'), q = $('qLead'), pend = false;
+    LEADS.forEach(function (m) { var o = el('option', '', '🔔 ' + (m >= 60 ? '1 giờ' : m + ' phút')); o.value = m; q.appendChild(o); });
+    q.value = getQLead(); q.onchange = function () { save('qlead', +q.value); };
+    function go() {
+      var t = i.value.trim(); if (!t || quickBusy) return;
+      quickBusy = true; save('qlead', +q.value);
+      quickAdd(t).then(function () { i.value = ''; }).then(function () { quickBusy = false; }, function () { quickBusy = false; });
+    }
+    f.onsubmit = function (ev) { ev.preventDefault(); go(); };
+    i.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.keyCode !== 13) return;
+      if (e.isComposing || e.keyCode === 229) { pend = true; return; }   // Enter đang chốt chữ gõ tiếng Việt
+      e.preventDefault(); go();
+    });
+    i.addEventListener('compositionend', function () { if (pend) { pend = false; setTimeout(go, 0); } });
+    i.addEventListener('blur', function () { pend = false; });
+  })();
 
   setInterval(function () { if (!document.hidden) refresh(); }, REFRESH_MS);
   document.addEventListener('visibilitychange', function () {
