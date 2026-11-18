@@ -23,6 +23,7 @@
     <div id="alert" class="alert" hidden></div>
     <div id="status" class="status"></div>
     <div class="btns">
+      <button id="btnIdle" class="ghost" title="Mở chế độ Màn hình chờ (dùng cho màn hình phụ)">Màn hình chờ</button>
       <button id="btnView" class="ghost" title="Chọn phần hiển thị">☰ Hiển thị</button>
       <div class="themes" role="group" aria-label="Giao diện">
         <button type="button" data-theme-btn="light" aria-pressed="false">Sáng</button>
@@ -76,6 +77,24 @@
     </h2>
     <div id="weekBody" class="wk"></div>
   </section>
+</div>
+
+<div id="idle" hidden aria-label="Màn hình chờ">
+  <div class="i-ctl" id="iCtl"><button type="button" id="iFull">Toàn màn hình</button><button type="button" id="iExit">Thoát</button></div>
+  <div class="i-root">
+    <div class="i-left">
+      <div class="i-time" id="iClock">--:--</div>
+      <div class="i-date" id="iDate"></div>
+      <div class="i-rule"></div>
+      <div class="i-wx" id="iWx"></div>
+      <div class="i-quote" id="iQuote"></div>
+    </div>
+    <div class="i-right">
+      <section class="i-sec" id="iLate"><h3></h3><div class="i-list"></div></section>
+      <section class="i-sec" id="iToday"><h3></h3><div class="i-list"></div></section>
+      <section class="i-sec" id="iNext"><h3></h3><div class="i-list"></div></section>
+    </div>
+  </div>
 </div>
 
 <dialog id="dlgView">

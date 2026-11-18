@@ -10,13 +10,13 @@
   --fs:16.5px;
 }
 :root[data-theme="dark"]{
-  --bg:#0f1211; --card:#181c1a; --ink:#ecece6; --mute:#9aa098; --line:#2a2f2c;
-  --accent:#5fcfab; --accent-soft:#1d3a31; --accent-ink:#0b1f19;
-  --warn:#ff9b84; --warn-bg:#3b221c; --amber:#f2c862; --amber-bg:#3a3014;
-  --chip-bg:#242926; --chip-ink:#b9beb6; --field:#121513;
-  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
-  --card-border:#232824;
-  --check:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b1f19' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+  --bg:#1b1e20; --card:#212527; --ink:#C7D2CD; --mute:#91A39B; --line:#2f3537;
+  --accent:#79A797; --accent-soft:#27342f; --accent-ink:#101719;
+  --warn:#BC9C80; --warn-bg:#2b2622; --amber:#BC9C80; --amber-bg:#2b2622;
+  --chip-bg:#2a2f31; --chip-ink:#a9b8b1; --field:#1a1d1f;
+  --shadow:none;
+  --card-border:#2a2f31;
+  --check:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23101719' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
 }
 :root[data-theme="bw"]{
   --bg:#e8e6df; --card:#f3f2ec; --ink:#262626; --mute:#55554f; --line:#bdbcb4;
@@ -146,7 +146,7 @@ header .hl{display:flex;align-items:center;gap:28px;flex-wrap:wrap;min-width:0}
 .info{display:grid;grid-template-columns:minmax(280px,4fr) minmax(0,8fr);gap:20px;align-items:stretch}
 .info.solo{grid-template-columns:1fr}
 .card.sm{background:var(--field);border:var(--bw) solid var(--line);box-shadow:none;padding:16px 20px;font-size:.9rem}
-:root[data-theme="dark"] .card.sm{background:#141816}
+:root[data-theme="dark"] .card.sm{background:#1e2224}
 :root[data-theme="bw"] .card.sm{background:var(--card);border-color:var(--ink)}
 .card.sm h2{font-size:.95rem;color:var(--mute);font-weight:600}
 :root[data-theme="bw"] .card.sm h2{color:var(--ink)}
@@ -196,7 +196,7 @@ header .hl{display:flex;align-items:center;gap:28px;flex-wrap:wrap;min-width:0}
 #grid .card.notes{padding:18px 18px 16px;font-size:.9rem}
 .nt{display:flex;gap:8px;align-items:flex-start;border-radius:10px;padding:9px 11px;margin-bottom:8px;cursor:text;overflow-wrap:anywhere;color:#222}
 .nt.n0{background:#fff4c2}.nt.n1{background:#dfeefb}.nt.n2{background:#fde3ec}.nt.n3{background:#e3f3e1}
-:root[data-theme="dark"] .nt{color:#111}
+:root[data-theme="dark"] .nt{background:#2b3032!important;color:#C7D2CD;border:1px solid #3a4042}
 :root[data-theme="bw"] .nt{background:var(--card)!important;border:2px solid var(--ink);color:var(--ink)}
 .nt .nx{flex:1}
 .nt .del{opacity:.4;color:#222;padding:0 6px}.nt:hover .del{opacity:1}
@@ -344,3 +344,47 @@ body.resizing{user-select:none;cursor:row-resize}
   #cardWeek{height:var(--h-week,clamp(120px,15vh,165px))}
 }
 @media (max-width:1099px),(max-height:599px){.split{display:none}}
+
+/* ===== Màn hình chờ: nền than xanh lục xám, màu dịu, không chuyển động ===== */
+body.is-idle{overflow:hidden}
+#idle{position:fixed;inset:0;z-index:1000;background:linear-gradient(135deg,#101719 0%,#182322 100%);color:#B8C5BF;
+  font-family:"Segoe UI Variable","Segoe UI",system-ui,-apple-system,sans-serif;overflow:hidden;cursor:default}
+#idle[hidden]{display:none}
+#idle.quiet{cursor:none}
+#idle .i-ctl{position:absolute;top:2.2vh;right:2.4vw;display:flex;gap:10px;z-index:2}
+#idle.quiet .i-ctl{visibility:hidden}
+#idle .i-ctl button{background:transparent;color:#91A39B;border:1px solid #2c3b39;border-radius:10px;padding:6px 14px;font-size:14px;cursor:pointer}
+#idle .i-ctl button:hover{color:#B8C5BF;border-color:#79A797}
+#idle .i-root{height:100%;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:5vw;padding:6vh 5vw 5vh}
+#idle .i-left{display:flex;flex-direction:column;justify-content:center;min-height:0;gap:2.2vh}
+#idle .i-time{font-size:min(21vh,14vw);font-weight:300;line-height:.95;letter-spacing:-.03em;color:#C7D2CD;font-variant-numeric:tabular-nums}
+#idle .i-date{font-size:3.3vh;color:#91A39B}
+#idle .i-rule{width:7vw;height:2px;background:#79A797;opacity:.8;margin:1vh 0}
+#idle .i-wxtop{display:flex;align-items:baseline;gap:1.6vw}
+#idle .i-temp{font-size:7.5vh;font-weight:300;color:#B8C5BF;font-variant-numeric:tabular-nums}
+#idle .i-cond{font-size:2.8vh;color:#91A39B}
+#idle .i-rain{margin-top:.6vh;font-size:2.5vh;color:#79A797}
+#idle .i-fc{margin-top:1.4vh;display:flex;flex-wrap:wrap;gap:0 2vw;font-size:2.3vh;color:#91A39B;font-variant-numeric:tabular-nums}
+#idle .i-quote{margin-top:3vh;font-size:2.7vh;line-height:1.45;font-style:italic;color:#91A39B;max-width:34ch}
+#idle .i-right{display:flex;flex-direction:column;gap:3.2vh;min-height:0;padding-top:2vh}
+#idle .i-sec{display:flex;flex-direction:column;min-height:0;flex:0 1 auto}
+#idle #iNext{margin-top:auto}
+#idle .i-sec.empty{flex:none}
+#idle .i-sec.empty .i-list{display:none}
+#idle .i-sec h3{flex:none;margin:0 0 1.4vh;padding-bottom:1vh;font-size:2.1vh;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#79A797;border-bottom:1px solid rgba(121,167,151,.32)}
+#idle .i-sec.empty h3{margin-bottom:0;border-bottom:0;opacity:.8}
+#idle .i-list{flex:0 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:1.3vh}
+#idle .i-it{display:flex;align-items:baseline;gap:1.1vw;font-size:3vh;line-height:1.25;color:#B8C5BF;min-width:0}
+#idle .i-t{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#idle .dot{flex:none;width:1.05vh;height:1.05vh;border-radius:50%;background:#79A797;align-self:center}
+#idle .dot.ev{background:transparent;border:2px solid #79A797;box-sizing:border-box}
+#idle .i-it.late .dot{background:#BC9C80}
+#idle .i-late{margin-left:auto;flex:none;font-size:2.3vh;color:#BC9C80}
+#idle .i-tag{flex:none;font-size:2vh;color:#91A39B;letter-spacing:.06em}
+#idle .i-time2{flex:none;font-size:2.7vh;color:#91A39B;font-variant-numeric:tabular-nums}
+#idle .i-day{flex:none;width:9vw;font-size:2.4vh;color:#91A39B;font-variant-numeric:tabular-nums}
+#idle .i-more,#idle .i-none{font-size:2.4vh;color:#91A39B}
+@media (max-width:900px){#idle .i-root{grid-template-columns:1fr;overflow:auto}#idle .i-time{font-size:22vw}}
+#idle,#idle *{transition:none!important;animation:none!important;box-shadow:none!important}
+
+:root[data-theme="dark"] body{background:#1b1e20}

@@ -65,6 +65,10 @@ function tick() {
   var n = new Date();
   $('clock').textContent = pad(n.getHours()) + ':' + pad(n.getMinutes());
   $('date').textContent = DAYS[n.getDay()] + ', ' + pad(n.getDate()) + '/' + pad(n.getMonth() + 1) + '/' + n.getFullYear();
+  if ($('iClock')) {
+    $('iClock').textContent = pad(n.getHours()) + ':' + pad(n.getMinutes());
+    $('iDate').textContent = DAYS[n.getDay()] + ', ' + pad(n.getDate()) + ' tháng ' + (n.getMonth() + 1) + ', ' + n.getFullYear();
+  }
 }
 
 // ---------- đăng nhập Google ----------
@@ -753,12 +757,119 @@ function fitAll() {
 var fitT = null;
 function scheduleFit() { clearTimeout(fitT); fitT = setTimeout(fitAll, 30); }
 
+// ---------- chế độ Màn hình chờ (chỉ xem, dùng cho màn hình phụ) ----------
+function idleOn() { return !$('idle').hidden; }
+function iLine(cls, parts) {
+  var d = el('div', 'i-it ' + cls);
+  parts.forEach(function (p) { if (p) d.appendChild(p); });
+  return d;
+}
+function fitIdleList(list, nodes, moreFmt) {
+  function build(k) {
+    list.textContent = '';
+    for (var i = 0; i < k; i++) list.appendChild(nodes[i]);
+    if (k < nodes.length) list.appendChild(el('div', 'i-more', moreFmt(nodes.length - k)));
+  }
+  build(nodes.length);
+  var k = nodes.length;
+  while (k > 0 && list.scrollHeight > list.clientHeight + 1) { k--; build(k); }
+}
+function renderIdle() {
+  if (!idleOn()) return;
+  tick();
+  $('iQuote').textContent = $('qText').textContent;
+  // thời tiết
+  var w = $('iWx'); w.textContent = '';
+  if (wx && wx.cur) {
+    var info = wxInfo(wx.cur.weather_code);
+    var top = el('div', 'i-wxtop');
+    top.appendChild(el('span', 'i-temp', Math.round(wx.cur.temperature_2m) + '°'));
+    top.appendChild(el('span', 'i-cond', info[1] + ' · Ninh Bình'));
+    w.appendChild(top);
+    var p = wx.daily.precipitation_probability_max || [];
+    var msg = p[0] >= 50 ? 'Hôm nay có mưa (' + p[0] + '%)' : p[1] >= 50 ? 'Ngày mai có mưa (' + p[1] + '%)' : '';
+    if (msg) w.appendChild(el('div', 'i-rain', msg));
+    var fc = el('div', 'i-fc');
+    for (var i = 1; i < wx.daily.time.length && i <= 5; i++) {
+      var d = wx.daily.time[i].split('-'), dow = new Date(+d[0], +d[1] - 1, +d[2]).getDay();
+      fc.appendChild(el('span', '', SHORT[dow] + ' ' + Math.round(wx.daily.temperature_2m_max[i]) + '°'));
+    }
+    w.appendChild(fc);
+  }
+  var t = todayStr(), items = allTaskItems();
+  var late = items.filter(function (it) { var d = dueOf(it); return d && d < t; }).sort(function (a, b) { return dueOf(a) < dueOf(b) ? -1 : 1; });
+  var todayT = items.filter(function (it) { return dueOf(it) === t; });
+  var evs = evSorted(t);
+  var secL = $('iLate'), secT = $('iToday'), secN = $('iNext');
+  secL.querySelector('h3').textContent = 'Quá hạn' + (late.length ? ' · ' + late.length : '');
+  secT.querySelector('h3').textContent = 'Hôm nay' + ((todayT.length + evs.length) ? ' · ' + (todayT.length + evs.length) : '');
+  secN.querySelector('h3').textContent = 'Sắp tới';
+  var more = function (n) { return '+ ' + n + ' việc nữa'; };
+
+  if (!state.at) {
+    secL.classList.add('empty'); secL.querySelector('.i-list').textContent = '';
+    secT.querySelector('.i-list').textContent = 'Chưa có dữ liệu. Hãy đăng nhập Google ở trang chính.';
+    secN.querySelector('.i-list').textContent = '';
+    return;
+  }
+  // quá hạn
+  secL.classList.toggle('empty', !late.length);
+  fitIdleList(secL.querySelector('.i-list'), late.map(function (it) {
+    var n = daysBetween(dueOf(it), t);
+    return iLine('late', [el('i', 'dot'), el('span', 'i-t', it.task.title || '(không tên)'), el('span', 'i-tag', abbr(it.listTitle)), el('span', 'i-late', n > 60 ? 'từ lâu' : 'quá ' + n + ' ngày')]);
+  }), more);
+  // hôm nay
+  var tn = evs.map(function (e) {
+    return iLine('', [el('i', 'dot ev'), el('span', 'i-time2', evTimeLabel(e)), el('span', 'i-t', e.summary || '(không tên)')]);
+  }).concat(todayT.map(function (it) {
+    return iLine('', [el('i', 'dot'), el('span', 'i-t', it.task.title || '(không tên)'), el('span', 'i-tag', abbr(it.listTitle))]);
+  }));
+  var tl = secT.querySelector('.i-list');
+  if (!tn.length) { tl.textContent = ''; tl.appendChild(el('div', 'i-none', 'Hôm nay chưa có việc.')); }
+  else fitIdleList(tl, tn, more);
+  // sắp tới (7 ngày)
+  var nx = [];
+  for (var k = 1; k <= 7; k++) {
+    var dd = new Date(); dd.setDate(dd.getDate() + k); var day = ymd(dd);
+    var lab = SHORT[dd.getDay()] + ' ' + pad(dd.getDate()) + '/' + pad(dd.getMonth() + 1);
+    evSorted(day).forEach(function (e) { nx.push(iLine('', [el('span', 'i-day', lab), el('span', 'i-time2', evTimeLabel(e)), el('span', 'i-t', e.summary || '(không tên)')])); });
+    items.filter(function (it) { return dueOf(it) === day; }).forEach(function (it) { nx.push(iLine('', [el('span', 'i-day', lab), el('span', 'i-t', it.task.title || '(không tên)'), el('span', 'i-tag', abbr(it.listTitle))])); });
+  }
+  var nl = secN.querySelector('.i-list');
+  if (!nx.length) { nl.textContent = ''; nl.appendChild(el('div', 'i-none', 'Tuần này không còn việc nào.')); }
+  else fitIdleList(nl, nx, more);
+}
+var idleQuietT = null;
+function idleWake() {
+  var b = $('idle'); b.classList.remove('quiet');
+  clearTimeout(idleQuietT);
+  idleQuietT = setTimeout(function () { b.classList.add('quiet'); }, 3000);
+}
+function enterIdle(full) {
+  $('idle').hidden = false;
+  document.body.classList.add('is-idle');
+  try { history.replaceState(null, '', location.pathname + location.search + '#idle'); } catch (e) {}
+  renderIdle(); idleWake();
+  if (full && document.documentElement.requestFullscreen) { try { document.documentElement.requestFullscreen().catch(function () {}); } catch (e) {} }
+}
+function exitIdle() {
+  $('idle').hidden = true;
+  document.body.classList.remove('is-idle');
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  if (document.fullscreenElement && document.exitFullscreen) { try { document.exitFullscreen(); } catch (e) {} }
+}
+function toggleFull() {
+  if (document.fullscreenElement) { document.exitFullscreen(); }
+  else if (document.documentElement.requestFullscreen) { document.documentElement.requestFullscreen().catch(function () {}); }
+}
+
 function render() {
   renderLists();
   renderUrgent();
   renderWeek();
   renderNotes();
   scheduleFit();
+  renderIdle();
   if (state.at) {
     var d = new Date(state.at);
     setStatus((state.offline ? 'Dữ liệu cũ · ' : 'Cập nhật ') + pad(d.getHours()) + ':' + pad(d.getMinutes()));
@@ -834,6 +945,15 @@ function init() {
   setInterval(fetchWeather, 30 * 60 * 1000);
   $('qNext').onclick = function () { qOff++; renderQuote(); };
   $('btnView').onclick = openView;
+  $('btnIdle').onclick = function () { enterIdle(true); };
+  $('iExit').onclick = exitIdle;
+  $('iFull').onclick = toggleFull;
+  $('idle').addEventListener('mousemove', idleWake);
+  $('idle').addEventListener('dblclick', toggleFull);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && idleOn() && !document.fullscreenElement) exitIdle(); });
+  window.addEventListener('resize', function () { renderIdle(); });
+  window.addEventListener('hashchange', function () { if (location.hash === '#idle') { if (!idleOn()) enterIdle(false); } else if (idleOn()) exitIdle(); });
+  if (location.hash === '#idle') enterIdle(false);
   window.addEventListener('resize', scheduleFit);
   Array.prototype.forEach.call(document.querySelectorAll('#presets button'), function (b) { b.onclick = function () { save('view', PRESETS[b.getAttribute('data-preset')]); applyView(); markPreset(); }; });
   Array.prototype.forEach.call(document.querySelectorAll('#weekTabs button'), function (b) { b.onclick = function () { save('weekMode', b.getAttribute('data-mode')); renderWeek(); }; });
