@@ -504,3 +504,12 @@ form.addnote input,form.add .arow input,.empty{font-size:.95rem}
 select.lead{font-size:.82rem;padding:4px 6px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 .card h2 form.quick select.lead{flex:none;padding:3px 4px;font-size:.78rem}
 .pop select.lead{width:100%;font-size:.85rem;padding:5px 8px}
+
+/* v26: tiêu đề ô quá hạn cùng màu với Cơ quan / Company */
+.card.urgent h2 .ttl,.uh.late,.uh.today,:root[data-theme="dark"] .uh.today{color:var(--ink)}
+
+/* v27: bỏ tiêu đề "Quá hạn & hôm nay"; Ghi chú cùng form + màu với Cơ quan */
+.card.urgent>h2{display:none}
+#cardNotes h2{font-size:1.2rem;margin-bottom:8px}
+#cardNotes h2 .ttl{text-transform:none;letter-spacing:0;font-weight:600;color:var(--ink);font-size:1.2rem}
+#cardNotes h2,#cardNotes h2 .ttl{font-size:.98rem}

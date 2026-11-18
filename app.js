@@ -780,13 +780,19 @@ function renderWeather() {
 }
 
 // ---------- chọn phần hiển thị ----------
-var VIEW_ITEMS = [['clock', 'Đồng hồ & châm ngôn'], ['weather', 'Thời tiết'], ['urgent', 'Quá hạn & hôm nay'], ['main', 'Công việc'], ['week', 'Việc trong tuần']];
+var VIEW_ITEMS = [['clock', 'Đồng hồ & ngày âm lịch'], ['weather', 'Thời tiết'], ['urgent', 'Quá hạn & hôm nay'], ['main', 'Công việc'], ['week', 'Việc trong tuần']];
 var PRESETS = {
   min: { clock: 0, weather: 0, urgent: 0, main: 1, week: 0 },
   daily: { clock: 1, weather: 0, urgent: 1, main: 1, week: 1 },
   full: { clock: 1, weather: 1, urgent: 1, main: 1, week: 1 }
 };
-function getView() { var v = load('view', null); return v || PRESETS.full; }
+function getView() {
+  var v = load('view', null);
+  // v26: đồng hồ nay nằm trong khung giờ/thời tiết -> bật lại cho cấu hình cũ đã tắt đồng hồ
+  if (v && load('viewv', 0) < 2) { v = JSON.parse(JSON.stringify(v)); v.clock = 1; save('view', v); }
+  save('viewv', 2);
+  return v || PRESETS.full;
+}
 var ROWS_DEF = {};
 function applyRows() {
   var r = load('rows', {}), root = document.documentElement;
