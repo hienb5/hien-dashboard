@@ -478,3 +478,9 @@ b.tm{font-weight:600;color:var(--accent);font-variant-numeric:tabular-nums}
 .uh{font-size:1.05rem}
 .card.urgent h2 .ttl{font-size:1.1rem}
 .info{height:var(--h-info,clamp(200px,23.5vh,260px))}
+/* cùng cỡ chữ cho các dòng gợi ý (trống / placeholder) */
+form.addnote input,form.add .arow input,.empty{font-size:.95rem}
+
+/* v21: bỏ nền từng dòng quá hạn / hôm nay; tiêu đề viết hoa */
+.ur,.ur.late,.ur.today,:root[data-theme="dark"] .ur.today{background:transparent}
+.card.urgent h2 .ttl,.uh{text-transform:uppercase;letter-spacing:.04em}
