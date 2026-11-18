@@ -402,3 +402,63 @@ header #btnAuth{font-size:.8rem;padding:6px 12px}
 .info{grid-template-columns:minmax(190px,2fr) minmax(0,6fr) minmax(230px,3fr)}
 #rowInfo #cardNotes{display:flex;flex-direction:column;min-height:0}
 #rowInfo #cardNotes .cb{flex:1;min-height:0;overflow-y:auto}
+
+/* v16: đồng hồ xuống hàng trên (dương + âm lịch); thanh đầu trang gọn; đăng xuất là biểu tượng ở cuối bên phải */
+header{max-width:none;width:100%;justify-content:flex-start}
+header .right{flex-direction:row;width:100%;align-items:center;justify-content:flex-start;flex-wrap:nowrap;gap:12px}
+header .btns{flex:1;flex-wrap:nowrap;justify-content:flex-start}
+header #btnAuth{margin-left:auto}
+header #btnAuth.icon{width:34px;height:34px;padding:0;border-radius:50%;font-size:1rem;line-height:1;background:transparent;color:var(--mute);border:1px solid var(--line)}
+header #btnAuth.icon:hover{color:var(--ink);border-color:var(--mute)}
+.info{grid-template-columns:minmax(230px,3fr) minmax(190px,2fr) minmax(0,6fr) minmax(220px,3fr)}
+.card.clk{display:flex;flex-direction:column;justify-content:center;gap:2px;overflow:hidden}
+.card.clk #clock{font-size:clamp(40px,3.6vw,64px);line-height:1}
+.card.clk #date{font-size:.95rem;margin-top:6px;color:var(--ink)}
+.card.clk #lunar{font-size:.85rem;color:var(--mute)}
+.card.clk .quote{margin-top:8px;max-width:none;font-size:.85rem}
+.card.clk .quote q{font-size:.85rem;color:var(--mute)}
+
+/* v17: khung giờ + thời tiết gộp một khung */
+.info{grid-template-columns:minmax(440px,6fr) minmax(0,6fr) minmax(220px,3fr)}
+.card.cw{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:center}
+.card.cw .clk{display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0}
+.card.cw .wxcol{min-width:0;border-left:1px solid var(--line);padding-left:20px}
+.card.cw .wxcol[hidden],.card.cw .clk[hidden]{display:none}
+
+/* v18: bỏ câu ca dao; giờ + thời tiết xếp dọc một cột hẹp, nhường chỗ cho Quá hạn & hôm nay */
+.info{grid-template-columns:minmax(270px,3fr) minmax(0,8fr) minmax(220px,3fr)}
+.card.cw{display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:10px}
+.card.cw .quote{display:none}
+.card.cw .wxcol{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:10px}
+.card.cw .wxcol h2{display:none}
+.card.cw #clock{font-size:clamp(38px,3.2vw,56px)}
+.card.cw{gap:6px;overflow:hidden}
+.card.cw #clock{font-size:clamp(34px,2.6vw,46px)}
+.card.cw #date{margin-top:3px;font-size:.88rem}
+.card.cw #lunar{font-size:.8rem}
+.card.cw .wxfc{display:none}
+.card.cw .wxcol{padding-top:8px}
+/* v18c: dự báo 4 ngày tới trong khung giờ/thời tiết */
+.card.cw .wxfc{display:flex;padding-top:6px;margin-top:0;font-size:.72rem;gap:2px}
+.card.cw .wxfc>*:nth-child(n+5){display:none}
+.card.cw .wxfc b{font-size:.78rem}
+.card.cw #clock{font-size:clamp(32px,2.3vw,42px)}
+.card.cw .wxrain{padding:3px 8px;font-size:.76rem}
+.card.cw{gap:4px}
+.card.cw .wxfc b{font-size:.74rem;white-space:nowrap}
+
+/* v19: sửa ngày/giờ khi bấm vào việc; nút giờ */
+.row .t,.ur .tt,.wk li .t{cursor:pointer}
+b.tm{font-weight:600;color:var(--accent);font-variant-numeric:tabular-nums}
+.pop{position:fixed;z-index:3000;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:0 8px 28px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:8px;min-width:230px}
+.pop.wide{min-width:290px}
+.pop .pd{display:flex;flex-wrap:wrap;gap:6px}
+.pop .pd .hd{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+.pop .dchip,.pop .tpc{font-size:.8rem;padding:4px 10px;border-radius:999px}
+.pop [aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tpb{display:flex;flex-direction:column;gap:6px}
+.tpb input{width:100%;padding:6px 10px;font-size:.9rem;border-radius:10px;border:1px solid var(--line);background:var(--field);color:var(--ink)}
+.tpl{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-height:150px;overflow-y:auto;scrollbar-width:thin}
+.tph{font-size:.8rem;padding:4px 0;border-radius:8px;font-variant-numeric:tabular-nums}
+.pop .pa{display:flex;justify-content:flex-end;gap:8px}
+.pop .pa button{font-size:.85rem;padding:5px 14px}
