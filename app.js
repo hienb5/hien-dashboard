@@ -273,7 +273,7 @@ function buildListCard(l) {
   var bt = el('button', '', 'Thêm');
   var dr = drafts[l.id] || (drafts[l.id] = { t: '', d: '' });
   ti.value = dr.t || '';
-  ti.oninput = function () { dr.t = ti.value; };
+  ti.oninput = function () { dr.t = ti.value; f.classList.toggle('has', !!(ti.value || dr.d)); };
   r1.appendChild(ti); r1.appendChild(bt); f.appendChild(r1);
 
   var chips = el('div', 'chips');
@@ -298,6 +298,7 @@ function buildListCard(l) {
     pick.setAttribute('aria-pressed', isC ? 'true' : 'false');
     pick.textContent = isC ? '📅 ' + dr.d.slice(8, 10) + '/' + dr.d.slice(5, 7) : '📅';
     if (isC) di.value = dr.d;
+    f.classList.toggle('has', !!(ti.value || dr.d));
   }
   paint();
   f.onsubmit = function (ev) {
@@ -436,14 +437,21 @@ function dayLabel(day) {
   var p = day.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]);
   return (d.getDay() === 0 ? 'Chủ nhật' : 'Thứ ' + (d.getDay() + 1)) + ' · ' + p[2] + '/' + p[1];
 }
+function abbr(title) {
+  var w = String(title || '').trim().split(/\s+/).filter(Boolean);
+  if (w.length > 1) return w.map(function (x) { return x.charAt(0); }).join('').toUpperCase().slice(0, 3);
+  return (w[0] || '?').slice(0, 3).toUpperCase();
+}
+function tagEl(listTitle) { var t = el('span', 'tag', abbr(listTitle)); t.title = listTitle; return t; }
 function taskRow(it, cls, withChip) {
   var row = el('div', 'ur ' + cls);
   var cb = el('input', 'chk'); cb.type = 'checkbox'; cb.title = 'Đánh dấu xong';
   cb.setAttribute('aria-label', 'Đánh dấu xong: ' + it.task.title);
   cb.onchange = function () { completeTask(it, row); };
   row.appendChild(cb);
-  var ut = el('div', 'ut', it.task.title || '(không tên)');
-  ut.appendChild(el('small', '', it.listTitle));
+  var ut = el('div', 'ut');
+  var tt = el('span', 'tt', it.task.title || '(không tên)'); tt.title = it.task.title || '';
+  ut.appendChild(tt); ut.appendChild(tagEl(it.listTitle));
   row.appendChild(ut);
   if (withChip) {
     var n = daysBetween(dueOf(it), todayStr());
@@ -470,8 +478,9 @@ function renderUrgent() {
   evs.forEach(function (e) {
     var row = el('div', 'ur today');
     row.appendChild(el('span', 'ico', '🕑'));
-    var ut = el('div', 'ut', evTimeLabel(e) + ' ' + (e.summary || '(không tên)'));
-    ut.appendChild(el('small', '', 'Lịch Google'));
+    var ut = el('div', 'ut');
+    var tt = el('span', 'tt', evTimeLabel(e) + ' ' + (e.summary || '(không tên)')); tt.title = e.summary || '';
+    ut.appendChild(tt); var tg = el('span', 'tag', 'LỊCH'); tg.title = 'Lịch Google'; ut.appendChild(tg);
     row.appendChild(ut);
     c2.appendChild(row);
   });
@@ -519,7 +528,7 @@ function renderWeek() {
       cb.onchange = function () { completeTask(it, li); };
       li.appendChild(cb);
       li.appendChild(el('span', 't', it.task.title || '(không tên)'));
-      li.appendChild(el('span', 'ln', it.listTitle));
+      li.appendChild(tagEl(it.listTitle));
       col.appendChild(li);
     });
     box.appendChild(col);
@@ -566,7 +575,8 @@ function renderNotes() {
   var f = el('form', 'addnote');
   var addBox = $('notesAdd'); addBox.textContent = '';
   var ti = el('input'); ti.type = 'text'; ti.placeholder = 'Thêm ghi chú…'; ti.required = true; ti.setAttribute('aria-label', 'Thêm ghi chú');
-  ti.value = noteDraft; ti.oninput = function () { noteDraft = ti.value; };
+  ti.value = noteDraft; ti.oninput = function () { noteDraft = ti.value; f.classList.toggle('has', !!ti.value); };
+  f.classList.toggle('has', !!noteDraft);
   var bt = el('button', '', 'Thêm');
   f.appendChild(ti); f.appendChild(bt);
   f.onsubmit = function (ev) {
@@ -671,6 +681,30 @@ var PRESETS = {
   full: { clock: 1, weather: 1, urgent: 1, main: 1, week: 1 }
 };
 function getView() { var v = load('view', null); return v || PRESETS.full; }
+var ROWS_DEF = {};
+function applyRows() {
+  var r = load('rows', {}), root = document.documentElement;
+  ['info', 'week'].forEach(function (k) {
+    if (r[k]) root.style.setProperty('--h-' + k, r[k] + 'px'); else root.style.removeProperty('--h-' + k);
+  });
+}
+function initSplit(id, key, sign, target) {
+  var bar = $(id);
+  bar.addEventListener('mousedown', function (e) {
+    e.preventDefault();
+    var y0 = e.clientY, h0 = $(target).getBoundingClientRect().height;
+    var lim = [110, Math.round(window.innerHeight * 0.5)];
+    document.body.classList.add('resizing');
+    function mv(ev) {
+      var h = Math.max(lim[0], Math.min(lim[1], Math.round(h0 + sign * (ev.clientY - y0))));
+      var r = load('rows', {}); r[key] = h; save('rows', r); applyRows(); scheduleFit();
+    }
+    function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); document.body.classList.remove('resizing'); }
+    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+  });
+  bar.addEventListener('dblclick', function () { var r = load('rows', {}); delete r[key]; save('rows', r); applyRows(); scheduleFit(); });
+}
+
 function applyView() {
   var v = getView();
   $('hdLeft').hidden = !v.clock;
@@ -680,6 +714,9 @@ function applyView() {
   $('rowInfo').classList.toggle('solo', !(v.weather && v.urgent));
   $('mainWrap').hidden = !v.main;
   $('cardWeek').hidden = !v.week;
+  $('splitInfo').hidden = !(v.weather || v.urgent) || !v.main;
+  $('splitWeek').hidden = !v.week || !v.main;
+  scheduleFit();
 }
 function openView() {
   var box = $('viewList'); box.textContent = '';
@@ -703,14 +740,15 @@ function markPreset() {
 
 // Nếu nội dung dài hơn ô: thu nhỏ chữ dần (tối thiểu 75%), còn dài nữa thì cuộn trong ô.
 function fitAll() {
-  function fit(card, els) {
-    var f = 1; card.style.setProperty('--fit', 1);
-    function over() { return els.some(function (e) { return e && e.scrollHeight > e.clientHeight + 1; }); }
-    while (over() && f > 0.75) { f = Math.round((f - 0.05) * 100) / 100; card.style.setProperty('--fit', f); }
-  }
-  Array.prototype.forEach.call(document.querySelectorAll('#grid .card'), function (c) { fit(c, [c.querySelector('.cb')]); });
-  fit($('cardUrgent'), Array.prototype.slice.call(document.querySelectorAll('#urgentBody .ucol')));
-  fit($('cardWeek'), [$('weekBody')]);
+  var root = document.documentElement, f = 1;
+  root.style.setProperty('--fit', 1);
+  var els = [].concat(
+    Array.prototype.slice.call(document.querySelectorAll('#grid .cb')),
+    Array.prototype.slice.call(document.querySelectorAll('#urgentBody .ucol')),
+    [$('weekBody')]).filter(function (e) { return e && e.offsetParent !== null; });
+  function over() { return els.some(function (e) { return e.scrollHeight > e.clientHeight + 1; }); }
+  // một cỡ chữ chung cho mọi việc (không ô nào to/nhỏ khác ô nào); tối thiểu 80%
+  while (over() && f > 0.8) { f = Math.round((f - 0.05) * 100) / 100; root.style.setProperty('--fit', f); }
 }
 var fitT = null;
 function scheduleFit() { clearTimeout(fitT); fitT = setTimeout(fitAll, 30); }
@@ -791,6 +829,7 @@ function openSettings() {
 function init() {
   initThemes();
   attachGrip($('cardNotes'), 'notes');
+  applyRows(); initSplit('splitInfo', 'info', 1, 'rowInfo'); initSplit('splitWeek', 'week', -1, 'cardWeek');
   applyView(); renderQuote(); renderWeather(); fetchWeather();
   setInterval(fetchWeather, 30 * 60 * 1000);
   $('qNext').onclick = function () { qOff++; renderQuote(); };

@@ -298,3 +298,49 @@ form.add button.dchip[aria-pressed="true"]{background:var(--accent);color:var(--
   .dchip{padding:2px 9px;font-size:.74rem}
 }
 .cb .row{margin-left:0;margin-right:0}
+
+/* ===== v9: gọn gàng, cỡ chữ việc đồng đều ===== */
+:root{--tfs:.95rem}
+.card h2{text-transform:none;letter-spacing:0}
+.card h2 .ttl{font-weight:600}
+#grid .card.list-card h2,#grid .card.notes h2{font-size:.98rem;font-weight:600}
+.card h2 .cnt{font-size:.7rem}
+/* mọi tên việc cùng một cỡ */
+.row .t,.ur .ut,.wd .li,.nt .nx,.nt input{font-size:calc(var(--tfs) * var(--fit,1))}
+.wd .li .tm{font-size:calc(var(--tfs) * var(--fit,1))}
+#grid .card.list-card .row .t{font-size:calc(var(--tfs) * var(--fit,1))}
+.cb,.ucol,.wk{font-size:inherit}
+.cb .row{padding-top:calc(9px * var(--fit,1));padding-bottom:calc(9px * var(--fit,1))}
+#grid .card.list-card .row{padding:calc(9px * var(--fit,1)) 8px}
+#grid .card.list-card .chk,.chk{width:20px;height:20px}
+.ur .chk,.wd .li .chk{width:20px;height:20px}
+/* ô quá hạn: một dòng "tên việc [CQ] ........ Quá 1 ngày" */
+.ur{padding:6px 10px;margin-bottom:5px}
+.ur .ut{display:flex;align-items:center;gap:8px;white-space:nowrap;min-width:0}
+.ur .ut .tt{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tag{flex:none;font-size:.66rem;font-weight:700;letter-spacing:.03em;border:1px solid var(--mute);color:var(--mute);border-radius:5px;padding:0 5px;line-height:1.5;background:transparent}
+.ur.late .tag,.ur.today .tag{color:inherit;border-color:currentColor;opacity:.75}
+.wd .li .tag{margin-left:auto}
+.wd .li{gap:8px}
+.ur .chip{font-size:.7rem}
+/* thêm việc: thu gọn, bấm vào mới mở rộng */
+form.add .arow input{background:transparent;border:0;border-bottom:1px dashed var(--line);border-radius:0;padding:5px 2px;font-size:.88rem}
+form.add .arow button,form.add .chips{display:none}
+form.add:focus-within .arow input,form.add.has .arow input{background:var(--field);border:var(--bw) solid var(--line);border-radius:10px;padding:7px 11px}
+form.add:focus-within .arow button,form.add.has .arow button,form.add:focus-within .chips,form.add.has .chips{display:flex}
+form.add .arow button{padding:6px 12px;font-size:.85rem}
+form.addnote input{background:transparent;border:0;border-bottom:1px dashed var(--line);border-radius:0;padding:5px 2px;font-size:.88rem}
+form.addnote button{display:none}
+form.addnote:focus-within input,form.addnote.has input{background:var(--field);border:var(--bw) solid var(--line);border-radius:10px;padding:7px 11px}
+form.addnote:focus-within button,form.addnote.has button{display:inline-block}
+:root[data-theme="bw"] form.add .arow input,:root[data-theme="bw"] form.addnote input{border-bottom-color:var(--mute)}
+/* thanh kéo chỉnh chiều cao hàng */
+.split{flex:none;height:10px;margin:-6px 0;cursor:row-resize;position:relative;z-index:2;border-radius:6px}
+.split::after{content:"";position:absolute;left:50%;top:3px;width:64px;height:4px;border-radius:4px;margin-left:-32px;background:var(--line);transition:background .15s}
+.split:hover::after,body.resizing .split::after{background:var(--accent)}
+body.resizing{user-select:none;cursor:row-resize}
+@media (min-width:1100px) and (min-height:600px){
+  .info{height:var(--h-info,clamp(170px,21vh,230px))}
+  #cardWeek{height:var(--h-week,clamp(120px,15vh,165px))}
+}
+@media (max-width:1099px),(max-height:599px){.split{display:none}}
