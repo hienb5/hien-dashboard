@@ -150,8 +150,8 @@ function selectedCals() { return load('cals', ['primary']); }
 
 function fetchEvents() {
   var start = new Date(); start.setHours(0, 0, 0, 0);
-  var end = new Date(start); end.setDate(end.getDate() + 2);
-  var q = '?singleEvents=true&orderBy=startTime&maxResults=50&timeMin=' + encodeURIComponent(start.toISOString()) +
+  var end = new Date(start); end.setDate(end.getDate() + 15);
+  var q = '?singleEvents=true&orderBy=startTime&maxResults=250&timeMin=' + encodeURIComponent(start.toISOString()) +
           '&timeMax=' + encodeURIComponent(end.toISOString());
   return Promise.all(selectedCals().map(function (id) {
     return api('GET', CAL + '/calendars/' + encodeURIComponent(id) + '/events' + q).then(function (r) {
@@ -227,9 +227,13 @@ function chipFor(due) {
 function buildListCard(l) {
   var card = el('section', 'card');
   var items = itemsFor(l.id);
-  var h = el('h2', '', l.title || '(không tên)');
-  h.appendChild(el('span', '', items.length ? items.length + ' việc' : ''));
+  var h = el('h2');
+  h.appendChild(el('span', 'ttl', l.title || '(không tên)'));
+  h.appendChild(el('span', 'cnt', items.length ? items.length + ' việc' : ''));
   card.appendChild(h);
+  card.classList.add('list-card');
+  card.setAttribute('data-key', l.id);
+  attachGrip(card, l.id);
 
   var box = el('div');
   if (!items.length) box.appendChild(el('div', 'empty', 'Không có việc nào.'));
@@ -265,17 +269,98 @@ function buildListCard(l) {
   return card;
 }
 
+function isNotes(l) { return String(l.title || '').trim().toLowerCase() === 'ghi chú'; }
+function realLists() { return state.lists.filter(function (l) { return !isNotes(l); }); }
+function notesList() { var r = state.lists.filter(isNotes); return r.length ? r[0] : null; }
+
 function renderLists() {
-  var box = $('lists');
-  box.textContent = '';
-  if (!state.lists.length && token) {
-    var c = el('section', 'card');
-    c.appendChild(el('h2', '', 'Việc cần làm'));
+  var grid = $('grid');
+  Array.prototype.forEach.call(grid.querySelectorAll('.list-card, .empty-card'), function (n) { n.remove(); });
+  var rl = realLists();
+  if (!rl.length && token) {
+    var c = el('section', 'card empty-card');
+    var h = el('h2'); h.appendChild(el('span', 'ttl', 'Việc cần làm'));
+    c.appendChild(h);
     c.appendChild(el('div', 'empty', 'Chưa có danh sách nào trong Google Tasks.'));
-    box.appendChild(c);
-    return;
+    grid.appendChild(c);
   }
-  state.lists.forEach(function (l) { box.appendChild(buildListCard(l)); });
+  rl.forEach(function (l) { grid.appendChild(buildListCard(l)); });
+  grid.appendChild($('cardNotes'));
+  applyOrder();
+}
+
+// ---------- kéo thả để sắp xếp các ô ----------
+var currentKeys = [];
+var dragKey = null;
+
+function applyOrder() {
+  var grid = $('grid');
+  var cards = Array.prototype.slice.call(grid.querySelectorAll('.card[data-key]'));
+  var map = {};
+  cards.forEach(function (c) { map[c.getAttribute('data-key')] = c; });
+  var keys = [];
+  load('order', []).forEach(function (k) { if (map[k] && keys.indexOf(k) < 0) keys.push(k); });
+  cards.forEach(function (c) { var k = c.getAttribute('data-key'); if (keys.indexOf(k) < 0) keys.push(k); });
+  keys.forEach(function (k) { grid.appendChild(map[k]); });
+  currentKeys = keys;
+}
+
+function moveCard(from, to) {
+  var keys = currentKeys.slice();
+  var i = keys.indexOf(from), j = keys.indexOf(to);
+  if (i < 0 || j < 0 || i === j) return;
+  keys.splice(i, 1);
+  keys.splice(j, 0, from);
+  save('order', keys);
+  applyOrder();
+}
+
+function nudge(key, d) {
+  var i = currentKeys.indexOf(key), j = i + d;
+  if (i < 0 || j < 0 || j >= currentKeys.length) return;
+  moveCard(key, currentKeys[j]);
+}
+
+function attachGrip(card, key) {
+  var h = card.querySelector('h2');
+  if (!h || h.querySelector('.grip')) return;
+  var grip = el('button', 'grip', '⠿');
+  grip.type = 'button';
+  grip.title = 'Kéo để sắp xếp (hoặc dùng phím mũi tên trái/phải)';
+  grip.setAttribute('aria-label', 'Di chuyển ô ' + (h.textContent || '').trim());
+  h.insertBefore(grip, h.firstChild);
+
+  grip.addEventListener('mousedown', function () { card.draggable = true; });
+  grip.addEventListener('mouseup', function () { card.draggable = false; });
+  grip.addEventListener('keydown', function (e) {
+    var d = e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : 0;
+    if (!d) return;
+    e.preventDefault();
+    nudge(key, d);
+    var again = document.querySelector('.card[data-key="' + key + '"] .grip');
+    if (again) again.focus();
+  });
+  card.addEventListener('dragstart', function (e) {
+    if (!card.draggable) { return; }
+    dragKey = key;
+    try { e.dataTransfer.setData('text/plain', key); e.dataTransfer.effectAllowed = 'move'; } catch (x) {}
+    card.classList.add('dragging');
+  });
+  card.addEventListener('dragend', function () {
+    card.draggable = false; dragKey = null;
+    Array.prototype.forEach.call(document.querySelectorAll('.dragging, .over'), function (n) { n.classList.remove('dragging'); n.classList.remove('over'); });
+  });
+  card.addEventListener('dragover', function (e) {
+    if (!dragKey || dragKey === key) return;
+    e.preventDefault();
+    card.classList.add('over');
+  });
+  card.addEventListener('dragleave', function (e) { if (!card.contains(e.relatedTarget)) card.classList.remove('over'); });
+  card.addEventListener('drop', function (e) {
+    e.preventDefault();
+    card.classList.remove('over');
+    if (dragKey && dragKey !== key) moveCard(dragKey, key);
+  });
 }
 
 function evTimeLabel(e) {
@@ -287,31 +372,302 @@ function evOnDay(e, day) {
   if (e.start.date) { return e.start.date <= day && day < (e.end && e.end.date ? e.end.date : e.start.date + '~'); }
   return ymd(new Date(e.start.dateTime)) === day;
 }
-function renderEvents(boxId, day) {
-  var box = $(boxId); box.textContent = '';
+function evSorted(day) {
   var list = state.events.filter(function (e) { return e.start && evOnDay(e, day); });
   list.sort(function (a, b) {
     var ka = a.start.date ? '0' : '1' + a.start.dateTime, kb = b.start.date ? '0' : '1' + b.start.dateTime;
     return ka < kb ? -1 : ka > kb ? 1 : 0;
   });
-  if (!list.length) { box.appendChild(el('div', 'empty', token ? 'Không có sự kiện nào.' : '—')); return; }
-  list.forEach(function (e) {
-    var row = el('div', 'row');
-    row.appendChild(el('span', 'h', evTimeLabel(e)));
-    row.appendChild(el('span', 't', e.summary || '(không tên)'));
-    box.appendChild(row);
+  return list;
+}
+function allTaskItems() {
+  var out = [];
+  realLists().forEach(function (l) {
+    (state.tasks[l.id] || []).forEach(function (t) { out.push({ list: l.id, listTitle: l.title, task: t }); });
   });
+  return out;
+}
+function dueOf(it) { return it.task.due ? it.task.due.slice(0, 10) : null; }
+function daysBetween(a, b) {
+  var pa = a.split('-'), pb = b.split('-');
+  return Math.round((Date.UTC(+pb[0], +pb[1] - 1, +pb[2]) - Date.UTC(+pa[0], +pa[1] - 1, +pa[2])) / 864e5);
+}
+function dayLabel(day) {
+  var p = day.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]);
+  return (d.getDay() === 0 ? 'Chủ nhật' : 'Thứ ' + (d.getDay() + 1)) + ' · ' + p[2] + '/' + p[1];
+}
+function taskRow(it, cls, withChip) {
+  var row = el('div', 'ur ' + cls);
+  var cb = el('input', 'chk'); cb.type = 'checkbox'; cb.title = 'Đánh dấu xong';
+  cb.setAttribute('aria-label', 'Đánh dấu xong: ' + it.task.title);
+  cb.onchange = function () { completeTask(it, row); };
+  row.appendChild(cb);
+  var ut = el('div', 'ut', it.task.title || '(không tên)');
+  ut.appendChild(el('small', '', it.listTitle));
+  row.appendChild(ut);
+  if (withChip) {
+    var n = daysBetween(dueOf(it), todayStr());
+    row.appendChild(el('span', 'chip', 'Quá ' + n + ' ngày'));
+  }
+  return row;
+}
+
+function renderUrgent() {
+  var box = $('urgentBody'); box.textContent = '';
+  var t = todayStr();
+  var items = allTaskItems();
+  var late = items.filter(function (it) { var d = dueOf(it); return d && d < t; })
+    .sort(function (a, b) { return dueOf(a) < dueOf(b) ? -1 : 1; });
+  var today = items.filter(function (it) { return dueOf(it) === t; });
+  var evs = evSorted(t);
+
+  var c1 = el('div'); c1.appendChild(el('div', 'uh late', 'Quá hạn · ' + late.length));
+  if (!late.length) c1.appendChild(el('div', 'uempty', state.at ? 'Không có việc quá hạn.' : '—'));
+  late.forEach(function (it) { c1.appendChild(taskRow(it, 'late', true)); });
+  var c2 = el('div'); c2.appendChild(el('div', 'uh today', 'Hôm nay · ' + (today.length + evs.length)));
+  if (!today.length && !evs.length) c2.appendChild(el('div', 'uempty', state.at ? 'Hôm nay chưa có việc.' : '—'));
+  evs.forEach(function (e) {
+    var row = el('div', 'ur today');
+    row.appendChild(el('span', 'ico', '🕑'));
+    var ut = el('div', 'ut', evTimeLabel(e) + ' ' + (e.summary || '(không tên)'));
+    ut.appendChild(el('small', '', 'Lịch Google'));
+    row.appendChild(ut);
+    c2.appendChild(row);
+  });
+  today.forEach(function (it) { c2.appendChild(taskRow(it, 'today', false)); });
+  box.appendChild(c1); box.appendChild(c2);
+
+  var a = $('alert');
+  if (!state.at) { a.hidden = true; return; }
+  var m = today.length + evs.length;
+  a.hidden = false;
+  if (late.length) { a.className = 'alert'; a.textContent = '⚠ ' + late.length + ' quá hạn · ' + m + ' hôm nay'; }
+  else { a.className = 'alert ok'; a.textContent = '✓ Không quá hạn · ' + m + ' hôm nay'; }
+}
+
+function weekRange(mode) {
+  var s = new Date(); s.setHours(0, 0, 0, 0); s.setDate(s.getDate() + 1);
+  var e = new Date(s);
+  if (mode === 'week') { var dow = new Date().getDay(); e = new Date(); e.setHours(0, 0, 0, 0); e.setDate(e.getDate() + (dow === 0 ? 0 : 7 - dow)); }
+  else e.setDate(s.getDate() + (mode === '5' ? 4 : 6));
+  return [s, e];
+}
+function renderWeek() {
+  var mode = load('weekMode', '7');
+  Array.prototype.forEach.call(document.querySelectorAll('#weekTabs button'), function (b) {
+    b.setAttribute('aria-pressed', b.getAttribute('data-mode') === mode ? 'true' : 'false');
+  });
+  var box = $('weekBody'); box.textContent = '';
+  var r = weekRange(mode), items = allTaskItems(), any = false;
+  for (var d = new Date(r[0]); d <= r[1]; d.setDate(d.getDate() + 1)) {
+    var day = ymd(d);
+    var evs = evSorted(day), ts = items.filter(function (it) { return dueOf(it) === day; });
+    if (!evs.length && !ts.length) continue;
+    any = true;
+    var col = el('div', 'wd'); col.appendChild(el('div', 'dh', dayLabel(day)));
+    evs.forEach(function (e) {
+      var li = el('div', 'li'); li.appendChild(el('span', 'dot'));
+      li.appendChild(el('span', 'tm', evTimeLabel(e)));
+      li.appendChild(el('span', 't', e.summary || '(không tên)'));
+      col.appendChild(li);
+    });
+    ts.forEach(function (it) {
+      var li = el('div', 'li');
+      var cb = el('input', 'chk'); cb.type = 'checkbox'; cb.title = 'Đánh dấu xong';
+      cb.setAttribute('aria-label', 'Đánh dấu xong: ' + it.task.title);
+      cb.onchange = function () { completeTask(it, li); };
+      li.appendChild(cb);
+      li.appendChild(el('span', 't', it.task.title || '(không tên)'));
+      li.appendChild(el('span', 'ln', it.listTitle));
+      col.appendChild(li);
+    });
+    box.appendChild(col);
+  }
+  if (!any) box.appendChild(el('div', 'uempty', state.at ? 'Không có việc nào trong khoảng này.' : '—'));
+}
+
+// ---------- ghi chú (lưu trong danh sách Google Tasks tên "Ghi chú") ----------
+var noteDraft = '';
+function notePatch(nl, t, text) {
+  return api('PATCH', TASKS + '/lists/' + encodeURIComponent(nl.id) + '/tasks/' + encodeURIComponent(t.id), { title: text })
+    .then(function () { t.title = text; save('cache', state); })
+    .catch(function (e) { banner('Không lưu được ghi chú: ' + (e && e.message || 'lỗi mạng'), true); });
+}
+function renderNotes() {
+  if (document.querySelector('#notesBody .editing')) return;
+  var box = $('notesBody'); box.textContent = '';
+  var nl = notesList();
+  var items = nl ? (state.tasks[nl.id] || []).slice().sort(function (a, b) { return (a.position || '') < (b.position || '') ? -1 : 1; }) : [];
+  if (!items.length && token) box.appendChild(el('div', 'empty', nl ? 'Chưa có ghi chú.' : 'Gõ ghi chú đầu tiên bên dưới — web sẽ tạo danh sách "Ghi chú" trong Google Tasks.'));
+  items.forEach(function (t, i) {
+    var n = el('div', 'nt n' + (i % 4));
+    var tx = el('span', 'nx', t.title || '(trống)');
+    n.appendChild(tx);
+    var del = el('button', 'del', '×'); del.title = 'Xoá ghi chú'; del.setAttribute('aria-label', 'Xoá ghi chú');
+    del.onclick = function (ev) { ev.stopPropagation(); deleteTask({ list: nl.id, task: t }, n); };
+    n.appendChild(del);
+    n.onclick = function () {
+      if (n.querySelector('input')) return;
+      var inp = el('input'); inp.type = 'text'; inp.value = t.title || ''; n.classList.add('editing');
+      n.replaceChild(inp, tx); inp.focus();
+      var done = false;
+      function fin(ok) {
+        if (done) return; done = true;
+        n.classList.remove('editing');
+        var v = inp.value.trim();
+        if (ok && v && v !== t.title) notePatch(nl, t, v).then(render); else render();
+      }
+      inp.onkeydown = function (e) { if (e.key === 'Enter') fin(true); else if (e.key === 'Escape') fin(false); };
+      inp.onblur = function () { fin(true); };
+    };
+    box.appendChild(n);
+  });
+  var f = el('form', 'addnote');
+  var ti = el('input'); ti.type = 'text'; ti.placeholder = 'Thêm ghi chú…'; ti.required = true; ti.setAttribute('aria-label', 'Thêm ghi chú');
+  ti.value = noteDraft; ti.oninput = function () { noteDraft = ti.value; };
+  var bt = el('button', '', 'Thêm');
+  f.appendChild(ti); f.appendChild(bt);
+  f.onsubmit = function (ev) {
+    ev.preventDefault();
+    var v = ti.value.trim(); if (!v) return;
+    addNote(v).then(function (ok) { if (ok) { noteDraft = ''; render(); } });
+  };
+  box.appendChild(f);
+}
+function addNote(text) {
+  var nl = notesList();
+  var ready = nl ? Promise.resolve(nl) : api('POST', TASKS + '/users/@me/lists', { title: 'Ghi chú' }).then(function (l) {
+    var n = { id: l.id, title: l.title || 'Ghi chú' }; state.lists.push(n); state.tasks[n.id] = []; return n;
+  });
+  return ready.then(function (l) { return addTask(l.id, text, ''); })
+    .catch(function (e) { banner('Không thêm được ghi chú: ' + (e && e.message || 'lỗi mạng'), true); return false; });
+}
+
+// ---------- câu châm ngôn theo ngày ----------
+var QUOTES = [
+  'Có công mài sắt, có ngày nên kim.', 'Nước chảy đá mòn.', 'Một cây làm chẳng nên non, ba cây chụm lại nên hòn núi cao.',
+  'Học, học nữa, học mãi.', 'Đi một ngày đàng, học một sàng khôn.', 'Không thầy đố mày làm nên.',
+  'Có chí thì nên.', 'Thất bại là mẹ thành công.', 'Lá lành đùm lá rách.', 'Uống nước nhớ nguồn.',
+  'Ăn quả nhớ kẻ trồng cây.', 'Gần mực thì đen, gần đèn thì sáng.', 'Tốt gỗ hơn tốt nước sơn.',
+  'Chậm mà chắc.', 'Dục tốc bất đạt.', 'Làm việc gì cũng phải có đầu có cuối.',
+  'Thuận vợ thuận chồng, tát bể Đông cũng cạn.', 'Một điều nhịn, chín điều lành.', 'Lời nói chẳng mất tiền mua, lựa lời mà nói cho vừa lòng nhau.',
+  'Cái nết đánh chết cái đẹp.', 'Có làm thì mới có ăn.', 'Muốn ăn thì lăn vào bếp.',
+  'Đường dài mới biết ngựa hay, ở lâu mới biết lòng người.', 'Chớ thấy sóng cả mà ngã tay chèo.', 'Hành trình ngàn dặm bắt đầu từ một bước chân.',
+  'Việc hôm nay chớ để ngày mai.', 'Kiến tha lâu cũng đầy tổ.', 'Cần cù bù thông minh.',
+  'Mưa dầm thấm lâu.', 'Nhất nghệ tinh, nhất thân vinh.', 'Tay làm hàm nhai, tay quai miệng trễ.',
+  'Có thực mới vực được đạo.', 'Biết người biết ta, trăm trận trăm thắng.', 'Đoàn kết là sức mạnh.',
+  'Thương người như thể thương thân.', 'Thời gian là vàng bạc.', 'Sai một li, đi một dặm.',
+  'Tiên học lễ, hậu học văn.', 'Không có việc gì khó, chỉ sợ lòng không bền.', 'Gieo nhân nào gặp quả nấy.',
+  'Rút dây động rừng — việc nhỏ cũng đáng cẩn thận.', 'Cẩn tắc vô ưu.', 'Có bột mới gột nên hồ.',
+  'Đẽo cày giữa đường — hãy giữ chủ kiến của mình.', 'Của một đồng, công một nén.', 'Nhiều tay vỗ nên kêu.',
+  'Ai ơi giữ chí cho bền, dù ai xoay hướng đổi nền mặc ai.', 'Mỗi ngày tiến một bước nhỏ, một năm là cả chặng đường.'
+];
+var qOff = 0;
+function renderQuote() {
+  var n = new Date(), start = new Date(n.getFullYear(), 0, 0);
+  var doy = Math.floor((n - start) / 864e5);
+  var q = QUOTES[(doy + qOff) % QUOTES.length];
+  $('qText').textContent = '“' + q + '”';
+  $('qSrc').textContent = 'Tục ngữ · ca dao';
+}
+
+// ---------- thời tiết (Open-Meteo, không cần khoá) ----------
+var WX_URL = 'https://api.open-meteo.com/v1/forecast?latitude=20.25&longitude=105.97' +
+  '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m' +
+  '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
+  '&timezone=Asia%2FBangkok&forecast_days=6';
+function wxInfo(c) {
+  if (c === 0) return ['☀', 'Trời quang'];
+  if (c === 1) return ['🌤', 'Ít mây'];
+  if (c === 2) return ['⛅', 'Có mây'];
+  if (c === 3) return ['☁', 'Nhiều mây'];
+  if (c === 45 || c === 48) return ['🌫', 'Sương mù'];
+  if (c >= 51 && c <= 57) return ['🌦', 'Mưa phùn'];
+  if (c >= 61 && c <= 67) return ['🌧', 'Mưa'];
+  if (c >= 80 && c <= 82) return ['🌦', 'Mưa rào'];
+  if (c >= 95) return ['⛈', 'Dông'];
+  return ['⛅', 'Có mây'];
+}
+var wx = load('wx', null);
+function fetchWeather() {
+  return fetch(WX_URL).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (j) {
+    wx = { at: Date.now(), cur: j.current, daily: j.daily }; save('wx', wx); renderWeather();
+  }).catch(function () { renderWeather(); });
+}
+var SHORT = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+function renderWeather() {
+  var box = $('wxBody'); box.textContent = '';
+  if (!wx || !wx.cur) { box.textContent = 'Chưa tải được thời tiết.'; return; }
+  var c = wx.cur, w = wxInfo(c.weather_code);
+  var now = el('div', 'wxnow');
+  now.appendChild(el('div', 'ic', w[0]));
+  now.appendChild(el('div', 'tp', Math.round(c.temperature_2m) + '°'));
+  var ds = el('div', 'ds');
+  ds.appendChild(document.createTextNode(w[1] + ' · cảm giác ' + Math.round(c.apparent_temperature) + '°'));
+  ds.appendChild(document.createElement('br'));
+  ds.appendChild(document.createTextNode('Ẩm ' + Math.round(c.relative_humidity_2m) + '% · gió ' + Math.round(c.wind_speed_10m) + ' km/h'));
+  now.appendChild(ds); box.appendChild(now);
+  var p = wx.daily.precipitation_probability_max || [];
+  var msg = p[0] >= 50 ? 'Hôm nay có mưa (' + p[0] + '%) — nhớ mang áo mưa' : p[1] >= 50 ? 'Ngày mai có mưa (' + p[1] + '%)' : '';
+  if (msg) box.appendChild(el('div', 'wxrain', '☔ ' + msg));
+  var fc = el('div', 'wxfc');
+  for (var i = 1; i < wx.daily.time.length && i <= 5; i++) {
+    var d = wx.daily.time[i].split('-'), dow = new Date(+d[0], +d[1] - 1, +d[2]).getDay();
+    var cell = el('div', '', SHORT[dow]);
+    var b = el('b', '', wxInfo(wx.daily.weather_code[i])[0] + ' ' + Math.round(wx.daily.temperature_2m_max[i]) + '°');
+    b.title = 'Thấp nhất ' + Math.round(wx.daily.temperature_2m_min[i]) + '°';
+    cell.appendChild(b); fc.appendChild(cell);
+  }
+  box.appendChild(fc);
+}
+
+// ---------- chọn phần hiển thị ----------
+var VIEW_ITEMS = [['clock', 'Đồng hồ & châm ngôn'], ['weather', 'Thời tiết'], ['urgent', 'Quá hạn & hôm nay'], ['main', 'Công việc'], ['week', 'Việc trong tuần']];
+var PRESETS = {
+  min: { clock: 0, weather: 0, urgent: 0, main: 1, week: 0 },
+  daily: { clock: 1, weather: 0, urgent: 1, main: 1, week: 1 },
+  full: { clock: 1, weather: 1, urgent: 1, main: 1, week: 1 }
+};
+function getView() { var v = load('view', null); return v || PRESETS.full; }
+function applyView() {
+  var v = getView();
+  $('hdLeft').hidden = !v.clock;
+  $('cardWx').hidden = !v.weather;
+  $('cardUrgent').hidden = !v.urgent;
+  $('rowInfo').hidden = !v.weather && !v.urgent;
+  $('rowInfo').classList.toggle('solo', !(v.weather && v.urgent));
+  $('mainWrap').hidden = !v.main;
+  $('cardWeek').hidden = !v.week;
+}
+function openView() {
+  var box = $('viewList'); box.textContent = '';
+  var v = getView();
+  VIEW_ITEMS.forEach(function (x) {
+    var lab = el('label'), cb = el('input'); cb.type = 'checkbox'; cb.checked = !!v[x[0]]; cb.setAttribute('data-k', x[0]);
+    cb.onchange = function () { var cur = getView(); cur = JSON.parse(JSON.stringify(cur)); cur[x[0]] = cb.checked ? 1 : 0; save('view', cur); applyView(); markPreset(); };
+    lab.appendChild(cb); lab.appendChild(document.createTextNode(x[1])); box.appendChild(lab);
+  });
+  markPreset();
+  $('dlgView').showModal();
+}
+function markPreset() {
+  var v = getView();
+  Array.prototype.forEach.call(document.querySelectorAll('#presets button'), function (b) {
+    var p = PRESETS[b.getAttribute('data-preset')], same = VIEW_ITEMS.every(function (x) { return !!p[x[0]] === !!v[x[0]]; });
+    b.setAttribute('aria-pressed', same ? 'true' : 'false');
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#viewList input'), function (cb) { cb.checked = !!v[cb.getAttribute('data-k')]; });
 }
 
 function render() {
   renderLists();
-  renderEvents('ev-today', todayStr());
-  renderEvents('ev-tomorrow', tomorrowStr());
+  renderUrgent();
+  renderWeek();
+  renderNotes();
   if (state.at) {
     var d = new Date(state.at);
     setStatus((state.offline ? 'Dữ liệu cũ · ' : 'Cập nhật ') + pad(d.getHours()) + ':' + pad(d.getMinutes()));
   } else setStatus('');
-  $('foot').textContent = 'Dữ liệu lấy từ Google Tasks và Google Calendar của bạn. Việc xong sẽ biến mất khỏi danh sách.';
 }
 
 // ---------- thao tác ghi ----------
@@ -377,6 +733,13 @@ function openSettings() {
 // ---------- khởi động ----------
 function init() {
   initThemes();
+  attachGrip($('cardNotes'), 'notes');
+  applyView(); renderQuote(); renderWeather(); fetchWeather();
+  setInterval(fetchWeather, 30 * 60 * 1000);
+  $('qNext').onclick = function () { qOff++; renderQuote(); };
+  $('btnView').onclick = openView;
+  Array.prototype.forEach.call(document.querySelectorAll('#presets button'), function (b) { b.onclick = function () { save('view', PRESETS[b.getAttribute('data-preset')]); applyView(); markPreset(); }; });
+  Array.prototype.forEach.call(document.querySelectorAll('#weekTabs button'), function (b) { b.onclick = function () { save('weekMode', b.getAttribute('data-mode')); renderWeek(); }; });
   tick(); setInterval(tick, 15000);
   restoreToken();
   var cached = load('cache', null);
