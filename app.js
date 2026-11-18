@@ -834,8 +834,8 @@ function fitAll() {
     Array.prototype.slice.call(document.querySelectorAll('#urgentBody .ucol')),
     [$('weekBody')]).filter(function (e) { return e && e.offsetParent !== null; });
   function over() { return els.some(function (e) { return e.scrollHeight > e.clientHeight + 1; }); }
-  // một cỡ chữ chung cho mọi việc (không ô nào to/nhỏ khác ô nào); tối thiểu 80%
-  while (over() && f > 0.8) { f = Math.round((f - 0.05) * 100) / 100; root.style.setProperty('--fit', f); }
+  // một cỡ chữ chung cho mọi việc (không ô nào to/nhỏ khác ô nào); tối thiểu 90%
+  while (over() && f > 0.9) { f = Math.round((f - 0.05) * 100) / 100; root.style.setProperty('--fit', f); }
 }
 var fitT = null;
 function scheduleFit() { clearTimeout(fitT); fitT = setTimeout(fitAll, 30); }

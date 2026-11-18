@@ -462,3 +462,19 @@ b.tm{font-weight:600;color:var(--accent);font-variant-numeric:tabular-nums}
 .tph{font-size:.8rem;padding:4px 0;border-radius:8px;font-variant-numeric:tabular-nums}
 .pop .pa{display:flex;justify-content:flex-end;gap:8px}
 .pop .pa button{font-size:.85rem;padding:5px 14px}
+
+/* v20 */
+:root{--tfs:1.1rem}
+/* tiêu đề ô quá hạn dùng cùng font với Cơ quan / Company, giữ màu vàng */
+.card.urgent h2 .ttl{text-transform:none;letter-spacing:0;font-size:1.2rem;font-weight:600;font-family:inherit}
+.uh{font-size:1.2rem;font-weight:600;letter-spacing:0;text-transform:none;font-family:inherit;margin-bottom:6px}
+/* chữ viết tắt nhỏ ~0.85 chữ bên cạnh */
+.tag{font-size:.85em;line-height:1.35;padding:0 5px}
+/* nút tích nhỏ ~0.8 */
+.chk,#grid .card.list-card .chk,.ur .chk,.wd .li .chk,.wk .chk{width:16px;height:16px;border-width:1.6px;background-size:11px}
+/* đồng hồ luôn nhìn thấy: xếp từ trên xuống, phần thừa cắt ở dưới */
+.card.cw{justify-content:flex-start}
+:root{--tfs:1.05rem}
+.uh{font-size:1.05rem}
+.card.urgent h2 .ttl{font-size:1.1rem}
+.info{height:var(--h-info,clamp(200px,23.5vh,260px))}
