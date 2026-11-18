@@ -278,3 +278,23 @@ form.add button.dchip[aria-pressed="true"]{background:var(--accent);color:var(--
   .rowtitle{margin-bottom:6px}
 }
 #grid{max-width:none;width:100%;margin:0}
+
+/* ===== sửa lỗi tràn ô (thấy trên màn hình thật) ===== */
+:root{color-scheme:light}:root[data-theme="dark"]{color-scheme:dark}
+.ucols{flex:1;min-height:0}
+.ucol,.cb,.wk{overflow-x:hidden;overflow-y:auto}
+.ucol{padding-right:2px}
+@media (min-width:1100px) and (min-height:600px){
+  .info{height:clamp(170px,21vh,230px)}
+  #cardWeek{height:clamp(120px,15vh,165px)}
+  .rowtitle{margin:0 4px 4px;font-size:.7rem}
+  .card.urgent{padding:10px 16px}
+  .card.sm{padding:10px 16px}
+  .wxb{gap:6px}
+  .wxnow .tp{font-size:1.8rem}.wxnow .ic{font-size:1.9rem}
+  .wxfc{padding-top:6px}
+  form.add{margin-top:6px;padding-top:6px}
+  form.add .chips{margin-top:5px}
+  .dchip{padding:2px 9px;font-size:.74rem}
+}
+.cb .row{margin-left:0;margin-right:0}

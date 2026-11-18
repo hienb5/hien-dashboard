@@ -447,7 +447,8 @@ function taskRow(it, cls, withChip) {
   row.appendChild(ut);
   if (withChip) {
     var n = daysBetween(dueOf(it), todayStr());
-    row.appendChild(el('span', 'chip', 'Quá ' + n + ' ngày'));
+    var dd = dueOf(it);
+    row.appendChild(el('span', 'chip', n > 60 ? dd.slice(8, 10) + '/' + dd.slice(5, 7) + '/' + dd.slice(0, 4) : 'Quá ' + n + ' ngày'));
   }
   return row;
 }
