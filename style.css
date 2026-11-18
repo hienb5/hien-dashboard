@@ -484,3 +484,7 @@ form.addnote input,form.add .arow input,.empty{font-size:.95rem}
 /* v21: bỏ nền từng dòng quá hạn / hôm nay; tiêu đề viết hoa */
 .ur,.ur.late,.ur.today,:root[data-theme="dark"] .ur.today{background:transparent}
 .card.urgent h2 .ttl,.uh{text-transform:uppercase;letter-spacing:.04em}
+
+/* v22: chữ việc cùng màu trầm với dòng gợi ý; tiêu đề Ghi chú viết hoa */
+:root[data-theme="dark"] .row .t,:root[data-theme="dark"] .ur .tt,:root[data-theme="dark"] .wd .li .t,:root[data-theme="dark"] .wk .t,:root[data-theme="dark"] .nt .nx{color:var(--mute)}
+#cardNotes h2 .ttl{text-transform:uppercase;letter-spacing:.04em}
