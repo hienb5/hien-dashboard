@@ -330,7 +330,6 @@ function renderLists() {
     grid.appendChild(c);
   }
   rl.forEach(function (l) { grid.appendChild(buildListCard(l)); });
-  grid.appendChild($('cardNotes'));
   applyOrder();
 }
 
@@ -489,7 +488,7 @@ function renderUrgent() {
     c2.appendChild(row);
   });
   today.forEach(function (it) { c2.appendChild(taskRow(it, 'today', false)); });
-  box.appendChild(c1); box.appendChild(c2);
+  box.appendChild(c2); box.appendChild(c1);
 
   var a = $('alert');
   if (!state.at) { a.hidden = true; return; }
@@ -939,7 +938,6 @@ function openSettings() {
 // ---------- khởi động ----------
 function init() {
   initThemes();
-  attachGrip($('cardNotes'), 'notes');
   applyRows(); initSplit('splitInfo', 'info', 1, 'rowInfo'); initSplit('splitWeek', 'week', -1, 'cardWeek');
   applyView(); renderQuote(); renderWeather(); fetchWeather();
   setInterval(fetchWeather, 30 * 60 * 1000);

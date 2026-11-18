@@ -10,10 +10,10 @@
   --fs:16.5px;
 }
 :root[data-theme="dark"]{
-  --bg:#1b1e20; --card:#212527; --ink:#C7D2CD; --mute:#91A39B; --line:#2f3537;
+  --bg:#1b1e20; --card:#212527; --ink:#E0E8E3; --mute:#AEBEB6; --line:#2f3537;
   --accent:#79A797; --accent-soft:#27342f; --accent-ink:#101719;
   --warn:#BC9C80; --warn-bg:#2b2622; --amber:#BC9C80; --amber-bg:#2b2622;
-  --chip-bg:#2a2f31; --chip-ink:#a9b8b1; --field:#1a1d1f;
+  --chip-bg:#2a2f31; --chip-ink:#C3D0C9; --field:#1a1d1f;
   --shadow:none;
   --card-border:#2a2f31;
   --check:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23101719' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
@@ -196,7 +196,7 @@ header .hl{display:flex;align-items:center;gap:28px;flex-wrap:wrap;min-width:0}
 #grid .card.notes{padding:18px 18px 16px;font-size:.9rem}
 .nt{display:flex;gap:8px;align-items:flex-start;border-radius:10px;padding:9px 11px;margin-bottom:8px;cursor:text;overflow-wrap:anywhere;color:#222}
 .nt.n0{background:#fff4c2}.nt.n1{background:#dfeefb}.nt.n2{background:#fde3ec}.nt.n3{background:#e3f3e1}
-:root[data-theme="dark"] .nt{background:#2b3032!important;color:#C7D2CD;border:1px solid #3a4042}
+:root[data-theme="dark"] .nt{background:#2b3032!important;color:#E0E8E3;border:1px solid #3a4042}
 :root[data-theme="bw"] .nt{background:var(--card)!important;border:2px solid var(--ink);color:var(--ink)}
 .nt .nx{flex:1}
 .nt .del{opacity:.4;color:#222;padding:0 6px}.nt:hover .del{opacity:1}
@@ -388,3 +388,17 @@ body.is-idle{overflow:hidden}
 #idle,#idle *{transition:none!important;animation:none!important;box-shadow:none!important}
 
 :root[data-theme="dark"] body{background:#1b1e20}
+:root[data-theme="dark"] .card.urgent{border:1px solid var(--card-border)}
+
+/* v14: nút đầu trang cùng cỡ chữ; đăng xuất nhỏ lại; tiêu đề ô quá hạn viết hoa; hai cột đồng bộ */
+header button,header .themes button{font-size:.9rem;line-height:1.2}
+header #btnAuth{font-size:.8rem;padding:6px 12px}
+.card.urgent h2 .ttl{text-transform:uppercase;letter-spacing:.06em;font-size:.95rem}
+:root[data-theme="dark"] .ur.today{background:var(--warn-bg)}
+:root[data-theme="dark"] .ur.today .chk{color:var(--warn)}
+:root[data-theme="dark"] .uh.today{color:var(--warn)}
+
+/* v15: hàng trên = thời tiết (thu nhỏ) | quá hạn & hôm nay | ghi chú */
+.info{grid-template-columns:minmax(190px,2fr) minmax(0,6fr) minmax(230px,3fr)}
+#rowInfo #cardNotes{display:flex;flex-direction:column;min-height:0}
+#rowInfo #cardNotes .cb{flex:1;min-height:0;overflow-y:auto}
