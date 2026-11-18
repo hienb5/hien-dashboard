@@ -237,7 +237,7 @@ function fetchEvents() {
           '&timeMax=' + encodeURIComponent(end.toISOString());
   return Promise.all(selectedCals().map(function (id) {
     return api('GET', CAL + '/calendars/' + encodeURIComponent(id) + '/events' + q).then(function (r) {
-      return (r.items || []).filter(function (e) { return e.status !== 'cancelled' && !(e.extendedProperties && e.extendedProperties.private && e.extendedProperties.private.hdTask); });
+      return (r.items || []).filter(function (e) { var pv = e.extendedProperties && e.extendedProperties.private; return e.status !== 'cancelled' && !(pv && (pv.hdTask || pv.hdDone)); }).map(function (e) { e._cal = id; return e; });
     }).catch(function (e) { if (e && e.code === 404) return []; throw e; });
   })).then(function (arr) {
     var seen = {}, out = [];
@@ -583,7 +583,10 @@ function renderUrgent() {
   if (!today.length && !evs.length) c2.appendChild(el('div', 'uempty', state.at ? 'Hôm nay chưa có việc.' : '—'));
   evs.forEach(function (e) {
     var row = el('div', 'ur today');
-    row.appendChild(el('span', 'ico', '🕑'));
+    var ecb = el('input', 'chk'); ecb.type = 'checkbox'; ecb.title = 'Đánh dấu xong (ẩn khỏi trang, giữ nguyên trong Google Calendar)';
+    ecb.setAttribute('aria-label', 'Đánh dấu xong: ' + (e.summary || ''));
+    ecb.onchange = function () { completeEvent(e, row, ecb); };
+    row.appendChild(ecb);
     var ut = el('div', 'ut');
     var tt = el('span', 'tt', evTimeLabel(e) + ' ' + (e.summary || '(không tên)')); tt.title = e.summary || '';
     ut.appendChild(tt); var tg = el('span', 'tag', 'LỊCH'); tg.title = 'Lịch Google'; ut.appendChild(tg);
@@ -990,6 +993,12 @@ function removeFromState(it) {
   var arr = state.tasks[it.list] || [];
   state.tasks[it.list] = arr.filter(function (t) { return t.id !== it.task.id; });
   save('cache', state);
+}
+function completeEvent(e, row, cb) {
+  row.classList.add('gone');
+  api('PATCH', CAL + '/calendars/' + encodeURIComponent(e._cal || 'primary') + '/events/' + encodeURIComponent(e.id), { extendedProperties: { private: { hdDone: '1' } } })
+    .then(function () { state.events = state.events.filter(function (x) { return x.id !== e.id; }); save('cache', state); render(); })
+    .catch(function (err) { row.classList.remove('gone'); cb.checked = false; banner('Không lưu được: ' + (err && err.message || 'lỗi mạng'), true); });
 }
 function completeTask(it, row) {
   row.classList.add('gone');
