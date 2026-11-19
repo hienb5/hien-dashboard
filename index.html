@@ -13,7 +13,6 @@
 
 <header>
   <div class="right">
-    <div id="alert" class="alert" hidden></div>
     <div id="status" class="status"></div>
     <div class="btns">
       <button id="btnIdle" class="ghost" title="Mở chế độ Màn hình chờ (dùng cho màn hình phụ)">Màn hình chờ</button>
@@ -25,6 +24,7 @@
       </div>
       <button id="btnRefresh" class="ghost" title="Làm mới">Làm mới</button>
       <button id="btnSettings" class="ghost" title="Chọn lịch hiển thị">Lịch</button>
+      <div id="alert" class="alert" hidden></div>
       <button id="btnAuth" class="primary" title="Đăng nhập Google">Đăng nhập Google</button>
     </div>
   </div>
@@ -33,26 +33,22 @@
 <div id="banner" class="banner" hidden></div>
 
 <div class="wrap">
+  <div class="body" id="body">
+  <section class="card urgent todaycard" id="cardToday"><div class="ucols" id="todayBody"></div></section>
+  <div class="mid" id="mid">
   <section class="info" id="rowInfo">
     <section class="card sm cw" id="cardWx">
     <div class="clk" id="hdLeft">
-      <div id="clock">--:--</div>
-      <div id="date"></div>
-      <div id="lunar"></div>
+      <div class="tline"><div id="clock">--:--</div><div class="dcol"><div id="date"></div><div id="lunar"></div></div></div>
       <div class="quote" id="quote"><q id="qText"></q><small><span id="qSrc"></span> <button type="button" id="qNext" class="lnk" title="Xem câu khác" aria-label="Xem câu khác">↻</button></small></div>
     </div>
       <div class="wxcol"><h2><span class="ttl">Thời tiết · Ninh Bình</span></h2>
       <div id="wxBody" class="wxb">Đang tải…</div></div>
     </section>
     <section class="card urgent" id="cardUrgent">
-      <h2><span class="ttl">Quá hạn &amp; hôm nay</span></h2>
       <div class="ucols" id="urgentBody"></div>
     </section>
-      <section class="card sm notes" id="cardNotes" data-key="notes">
-        <h2><span class="ttl">Ghi chú</span></h2>
-        <div id="notesBody" class="cb"></div>
-        <div id="notesAdd"></div>
-      </section>
+
   </section>
 
   <div class="split" id="splitInfo" title="Kéo để đổi chiều cao hàng (bấm đúp để về mặc định)" role="separator"></div>
@@ -62,7 +58,6 @@
     <main class="grid" id="grid">
     </main>
   </section>
-
   <div class="split" id="splitWeek" title="Kéo để đổi chiều cao hàng (bấm đúp để về mặc định)" role="separator"></div>
 
   <section class="card sm" id="cardWeek">
@@ -76,6 +71,15 @@
     </h2>
     <div id="weekBody" class="wk"></div>
   </section>
+      <section class="card sm notes" id="cardNotes" data-key="notes">
+        <h2><span class="ttl">Ghi chú</span></h2>
+        <div id="notesBody" class="cb"></div>
+        <div id="notesAdd"></div>
+      </section>
+  </div>
+  </div>
+
+
 </div>
 
 <div id="idle" hidden aria-label="Màn hình chờ">

@@ -513,3 +513,40 @@ select.lead{font-size:.82rem;padding:4px 6px;border-radius:10px;border:1px solid
 #cardNotes h2{font-size:1.2rem;margin-bottom:8px}
 #cardNotes h2 .ttl{text-transform:none;letter-spacing:0;font-weight:600;color:var(--ink);font-size:1.2rem}
 #cardNotes h2,#cardNotes h2 .ttl{font-size:.98rem}
+
+/* v29: ngày dương cùng dòng với giờ; âm lịch viết tắt AL; nhắc quá hạn nằm sau nút Lịch */
+.card.cw .tline{display:flex;align-items:baseline;gap:14px;flex-wrap:nowrap;min-width:0}
+.card.cw .tline #date{margin-top:0;font-size:.95rem;white-space:nowrap;color:var(--ink)}
+.card.cw #lunar{margin-top:2px}
+header .btns .alert{margin-left:6px;white-space:nowrap}
+.card.cw .dcol{display:flex;flex-direction:column;gap:2px;min-width:0}
+.card.cw .dcol #date{margin:0;font-size:.95rem}
+.card.cw .dcol #lunar{margin:0;font-size:.85rem;color:var(--mute);white-space:nowrap}
+
+/* v31 (thử): cột HÔM NAY dài chiếm cả hai hàng ở bên trái */
+.body{display:grid;grid-template-columns:minmax(300px,3fr) minmax(0,9fr);gap:12px;flex:1;min-height:0}
+.mid{display:flex;flex-direction:column;gap:12px;min-height:0;min-width:0}
+.mid #mainWrap{flex:1;min-height:0}
+.todaycard{min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.todaycard .ucols{display:flex;flex:1;min-height:0}
+.todaycard .ucol{flex:1;min-height:0;overflow-y:auto}
+.info{grid-template-columns:minmax(300px,4fr) minmax(0,4fr) minmax(220px,3fr)}
+#cardUrgent .ucols{display:flex}
+#cardUrgent .ucol{flex:1}
+.body{grid-template-columns:minmax(0,9fr) minmax(300px,3fr)} .todaycard{order:2}
+/* v31b: lưới 3 hàng — [đồng hồ|Persion|Quá hạn] / [Cơ quan|Company] / [Việc trong tuần|Ghi chú] */
+.mid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:minmax(190px,27%) minmax(0,1fr) auto;gap:12px}
+.mid #rowInfo,.mid #mainWrap,.mid #grid{display:contents}
+.mid .split,.mid .rowtitle{display:none}
+.mid #cardWx{grid-column:1/5;grid-row:1}
+.mid #grid>.list-card:nth-child(1){grid-column:5/9;grid-row:1;min-height:0}
+.mid #cardUrgent{grid-column:9/13;grid-row:1;min-height:0}
+.mid #grid>.list-card:nth-child(2){grid-column:1/7;grid-row:2;min-height:0}
+.mid #grid>.list-card:nth-child(3){grid-column:7/13;grid-row:2;min-height:0}
+.mid #cardWeek{grid-column:1/10;grid-row:3}
+.mid #cardNotes{grid-column:10/13;grid-row:3}
+.mid .info{height:auto}
+/* v31d: ngày dương/âm đẩy lên sát đỉnh, giờ to hơn */
+.card.cw .tline{align-items:flex-start}
+.card.cw #clock{font-size:clamp(42px,3vw,58px)}
+.card.cw .dcol{padding-top:2px}

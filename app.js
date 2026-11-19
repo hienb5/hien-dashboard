@@ -116,7 +116,7 @@ function lunarOf(dd, mm, yy) {
 var CAN = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'], CHI = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
 function lunarText(n) {
   var l = lunarOf(n.getDate(), n.getMonth() + 1, n.getFullYear());
-  return 'Âm lịch: ' + l.d + '/' + l.m + (l.leap ? ' nhuận' : '') + ' · năm ' + CAN[(l.y + 6) % 10] + ' ' + CHI[(l.y + 8) % 12];
+  return 'AL ' + l.d + '/' + l.m + (l.leap ? ' nhuận' : '') + ' · ' + CAN[(l.y + 6) % 10] + ' ' + CHI[(l.y + 8) % 12];
 }
 var lateSig = null;
 function tick() {
@@ -126,7 +126,7 @@ function tick() {
     if (lateSig !== null && sg !== lateSig) { lateSig = sg; setTimeout(render, 0); } else lateSig = sg;
   }
   $('clock').textContent = pad(n.getHours()) + ':' + pad(n.getMinutes());
-  $('date').textContent = DAYS[n.getDay()] + ', ' + pad(n.getDate()) + '/' + pad(n.getMonth() + 1) + '/' + n.getFullYear();
+  $('date').textContent = DAYS[n.getDay()] + ' ' + pad(n.getDate()) + '/' + pad(n.getMonth() + 1) + '/' + n.getFullYear();
   if ($('lunar')) $('lunar').textContent = lunarText(n);
   if ($('iClock')) {
     $('iClock').textContent = pad(n.getHours()) + ':' + pad(n.getMinutes());
@@ -567,7 +567,7 @@ function taskRow(it, cls, withChip) {
 }
 
 function renderUrgent() {
-  var box = $('urgentBody'); box.textContent = '';
+  var box = $('urgentBody'); box.textContent = ''; var box2 = $('todayBody'); box2.textContent = '';
   var t = todayStr();
   var items = allTaskItems();
   var late = items.filter(isLateIt)
@@ -594,7 +594,7 @@ function renderUrgent() {
     c2.appendChild(row);
   });
   today.forEach(function (it) { c2.appendChild(taskRow(it, 'today', false)); });
-  box.appendChild(c2); box.appendChild(c1);
+  box.appendChild(c1); box2.appendChild(c2);
 
   var a = $('alert');
   if (!state.at) { a.hidden = true; return; }
@@ -825,7 +825,7 @@ function applyView() {
   $('hdLeft').hidden = !v.clock;
   document.querySelector('.wxcol').hidden = !v.weather;
   $('cardWx').hidden = !v.weather && !v.clock;
-  $('cardUrgent').hidden = !v.urgent;
+  $('cardUrgent').hidden = !v.urgent; $('cardToday').hidden = !v.urgent;
   $('rowInfo').hidden = !v.weather && !v.urgent && !v.clock;
   $('rowInfo').classList.toggle('solo', !(v.weather && v.urgent));
   $('mainWrap').hidden = !v.main;
