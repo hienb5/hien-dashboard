@@ -540,6 +540,15 @@ function evOnDay(e, day) {
   if (e.start.date) { return e.start.date <= day && day < (e.end && e.end.date ? e.end.date : e.start.date + '~'); }
   return ymd(new Date(e.start.dateTime)) === day;
 }
+function evKey(e) { return e.start.date ? '00:00' : (function (d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); })(new Date(e.start.dateTime)); }
+function taskKey(it) { return tParse(it.task).time || '99:99'; }
+// sắp xếp các dòng có data-k (giờ) tăng dần: gần nhất lên trên, không giờ xuống cuối; giữ thứ tự cũ khi bằng nhau
+function sortRowsByKey(box) {
+  var rows = Array.prototype.filter.call(box.children, function (n) { return n.hasAttribute('data-k'); });
+  var idx = rows.map(function (n, i) { return [n, i]; });
+  idx.sort(function (a, b) { var ka = a[0].getAttribute('data-k'), kb = b[0].getAttribute('data-k'); return ka < kb ? -1 : ka > kb ? 1 : a[1] - b[1]; });
+  idx.forEach(function (p) { box.appendChild(p[0]); });
+}
 function evSorted(day) {
   var list = state.events.filter(function (e) { return e.start && evOnDay(e, day); });
   list.sort(function (a, b) {
@@ -593,7 +602,7 @@ function renderUrgent() {
   var t = todayStr();
   var items = allTaskItems();
   var late = items.filter(isLateIt)
-    .sort(function (a, b) { var da = dueOf(a), db = dueOf(b); if (da !== db) return da < db ? -1 : 1; return (tParse(a.task).time || '') < (tParse(b.task).time || '') ? -1 : 1; });
+    .sort(function (a, b) { var da = dueOf(a), db = dueOf(b); if (da !== db) return da < db ? -1 : 1; return (tParse(a.task).time || '99:99') < (tParse(b.task).time || '99:99') ? -1 : 1; });
   var today = items.filter(function (it) { return dueOf(it) === t && !isLateIt(it); });
   var evs = evSorted(t);
   lateSig = late.length;
@@ -613,9 +622,11 @@ function renderUrgent() {
     var tt = el('span', 'tt', evTimeLabel(e) + ' ' + (e.summary || '(không tên)')); tt.title = e.summary || '';
     ut.appendChild(tt); var tg = el('span', 'tag', 'LỊCH'); tg.title = 'Lịch Google'; ut.appendChild(tg);
     row.appendChild(ut);
+    row.setAttribute('data-k', evKey(e));
     c2.appendChild(row);
   });
-  today.forEach(function (it) { c2.appendChild(taskRow(it, 'today', false)); });
+  today.forEach(function (it) { var r = taskRow(it, 'today', false); r.setAttribute('data-k', taskKey(it)); c2.appendChild(r); });
+  sortRowsByKey(c2);
   box.appendChild(c1); box2.appendChild(c2);
 
   var a = $('alert');
@@ -650,6 +661,7 @@ function renderWeek() {
       var li = el('div', 'li'); li.appendChild(el('span', 'dot'));
       li.appendChild(el('span', 'tm', evTimeLabel(e)));
       li.appendChild(el('span', 't', e.summary || '(không tên)'));
+      li.setAttribute('data-k', evKey(e));
       col.appendChild(li);
     });
     ts.forEach(function (it) {
@@ -660,8 +672,10 @@ function renderWeek() {
       li.appendChild(cb);
       var lt = el('span', 't'); tSet(lt, it.task); lt.title = 'Bấm để đổi ngày / giờ'; lt.onclick = function (ev) { ev.stopPropagation(); openEdit(lt, it); }; li.appendChild(lt);
       li.appendChild(tagEl(it.listTitle));
+      li.setAttribute('data-k', taskKey(it));
       col.appendChild(li);
     });
+    sortRowsByKey(col);
     box.appendChild(col);
   }
   if (!any) box.appendChild(el('div', 'uempty', state.at ? 'Không có việc nào trong khoảng này.' : '—'));
@@ -958,7 +972,7 @@ function renderIdle() {
     w.appendChild(fc);
   }
   var t = todayStr(), items = allTaskItems();
-  var late = items.filter(isLateIt).sort(function (a, b) { var da = dueOf(a), db = dueOf(b); if (da !== db) return da < db ? -1 : 1; return (tParse(a.task).time || '') < (tParse(b.task).time || '') ? -1 : 1; });
+  var late = items.filter(isLateIt).sort(function (a, b) { var da = dueOf(a), db = dueOf(b); if (da !== db) return da < db ? -1 : 1; return (tParse(a.task).time || '99:99') < (tParse(b.task).time || '99:99') ? -1 : 1; });
   var todayT = items.filter(function (it) { return dueOf(it) === t && !isLateIt(it); });
   var evs = evSorted(t);
   var secL = $('iLate'), secT = $('iToday'), secN = $('iNext');
@@ -980,11 +994,10 @@ function renderIdle() {
     return iLine('late', [el('i', 'dot'), el('span', 'i-t', it.task.title || '(không tên)'), el('span', 'i-tag', abbr(it.listTitle)), el('span', 'i-late', n === 0 ? 'quá giờ' : n > 60 ? 'từ lâu' : 'quá ' + n + ' ngày')]);
   }), more);
   // hôm nay
-  var tn = evs.map(function (e) {
-    return iLine('', [el('i', 'dot ev'), el('span', 'i-time2', evTimeLabel(e)), el('span', 'i-t', e.summary || '(không tên)')]);
-  }).concat(todayT.map(function (it) {
-    return iLine('', [el('i', 'dot'), el('span', 'i-t', it.task.title || '(không tên)'), el('span', 'i-tag', abbr(it.listTitle))]);
-  }));
+  var tk = [];
+  evs.forEach(function (e) { tk.push([evKey(e), iLine('', [el('i', 'dot ev'), el('span', 'i-time2', evTimeLabel(e)), el('span', 'i-t', e.summary || '(không tên)')])]); });
+  todayT.forEach(function (it) { tk.push([taskKey(it), iLine('', [el('i', 'dot'), el('span', 'i-t', it.task.title || '(không tên)'), el('span', 'i-tag', abbr(it.listTitle))])]); });
+  var tn = tk.map(function (p, i) { return [p[0], i, p[1]]; }).sort(function (a, b) { return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : a[1] - b[1]; }).map(function (p) { return p[2]; });
   var tl = secT.querySelector('.i-list');
   if (!tn.length) { tl.textContent = ''; tl.appendChild(el('div', 'i-none', 'Hôm nay chưa có việc.')); }
   else fitIdleList(tl, tn, more);
@@ -993,8 +1006,10 @@ function renderIdle() {
   for (var k = 1; k <= 7; k++) {
     var dd = new Date(); dd.setDate(dd.getDate() + k); var day = ymd(dd);
     var lab = SHORT[dd.getDay()] + ' ' + pad(dd.getDate()) + '/' + pad(dd.getMonth() + 1);
-    evSorted(day).forEach(function (e) { nx.push(iLine('', [el('span', 'i-day', lab), el('span', 'i-time2', evTimeLabel(e)), el('span', 'i-t', e.summary || '(không tên)')])); });
-    items.filter(function (it) { return dueOf(it) === day; }).forEach(function (it) { nx.push(iLine('', [el('span', 'i-day', lab), el('span', 'i-t', it.task.title || '(không tên)'), el('span', 'i-tag', abbr(it.listTitle))])); });
+    var dk = [];
+    evSorted(day).forEach(function (e) { dk.push([evKey(e), iLine('', [el('span', 'i-day', lab), el('span', 'i-time2', evTimeLabel(e)), el('span', 'i-t', e.summary || '(không tên)')])]); });
+    items.filter(function (it) { return dueOf(it) === day; }).forEach(function (it) { dk.push([taskKey(it), iLine('', [el('span', 'i-day', lab), el('span', 'i-t', it.task.title || '(không tên)'), el('span', 'i-tag', abbr(it.listTitle))])]); });
+    dk.map(function (p, i) { return [p[0], i, p[1]]; }).sort(function (a, b) { return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : a[1] - b[1]; }).forEach(function (p) { nx.push(p[2]); });
   }
   var nl = secN.querySelector('.i-list');
   if (!nx.length) { nl.textContent = ''; nl.appendChild(el('div', 'i-none', 'Tuần này không còn việc nào.')); }
