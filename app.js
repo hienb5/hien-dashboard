@@ -806,7 +806,7 @@ function getView() {
 var ROWS_DEF = {};
 function applyRows() {
   var r = load('rows', {}), root = document.documentElement;
-  ['info', 'week'].forEach(function (k) {
+  ['info', 'week', 'r1', 'r3'].forEach(function (k) {
     if (r[k]) root.style.setProperty('--h-' + k, r[k] + 'px'); else root.style.removeProperty('--h-' + k);
   });
 }
@@ -1183,7 +1183,7 @@ function openSettings() {
 // ---------- khởi động ----------
 function init() {
   initThemes();
-  applyRows(); initSplit('splitInfo', 'info', 1, 'rowInfo'); initSplit('splitWeek', 'week', -1, 'cardWeek');
+  applyRows(); initSplit('splitInfo', 'r1', 1, 'cardUrgent'); initSplit('splitWeek', 'r3', -1, 'cardWeek');
   applyView(); renderQuote(); renderWeather(); fetchWeather();
   setInterval(fetchWeather, 30 * 60 * 1000);
   $('qNext').onclick = function () { qOff++; renderQuote(); };

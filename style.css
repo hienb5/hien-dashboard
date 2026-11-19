@@ -537,7 +537,7 @@ header .btns .alert{margin-left:6px;white-space:nowrap}
 /* v31b: lưới 3 hàng — [đồng hồ|Persion|Quá hạn] / [Cơ quan|Company] / [Việc trong tuần|Ghi chú] */
 .mid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:minmax(190px,27%) minmax(0,1fr) auto;gap:12px}
 .mid #rowInfo,.mid #mainWrap,.mid #grid{display:contents}
-.mid .split,.mid .rowtitle{display:none}
+.mid .rowtitle{display:none}
 .mid #cardWx{grid-column:1/5;grid-row:1}
 .mid #grid>.list-card:nth-child(1){grid-column:5/9;grid-row:1;min-height:0}
 .mid #cardUrgent{grid-column:9/13;grid-row:1;min-height:0}
@@ -605,3 +605,12 @@ header .hdc #clock{font-size:26px}
 #idle .i-sec h3{color:#8FBFAE}
 #idle{color:#E6EEEA}
 #idle .i-ctl button{color:#B9C8C0;border-color:#3a4c49}
+
+/* v34: kéo thả đổi chiều cao hàng — tay nắm nằm giữa hàng 1/2 và hàng 2/3 */
+.mid{grid-template-rows:var(--h-r1,minmax(190px,27%)) minmax(0,1fr) var(--h-r3,auto)}
+.mid #splitInfo{grid-column:1/9;grid-row:1;align-self:end;margin:0 0 -12px;height:12px}
+.mid #splitWeek{grid-column:1/13;grid-row:3;align-self:start;margin:-12px 0 0;height:12px}
+.mid .split::after{top:4px}
+.mid #cardWeek,.mid #cardNotes{min-height:0;overflow:hidden}
+.mid{grid-template-rows:var(--h-r1,minmax(190px,27%)) minmax(0,1fr) var(--h-r3,clamp(120px,15vh,165px))}
+.mid #cardWeek,.mid #cardNotes{height:auto}
