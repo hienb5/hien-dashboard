@@ -641,3 +641,62 @@ header .btns>.status{font-size:.8rem;line-height:1;white-space:nowrap;color:var(
 header .btns .alert{margin-left:auto;margin-right:auto}
 header .hdc #clock{font-size:clamp(28px,1.7vw,34px)}
 @media (min-width:1600px){header .right{position:relative}header .btns .alert{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0}}
+
+/* ===== v40: giao diện điện thoại (iPhone) — 1 cột, cuộn dọc, nút to dễ chạm ===== */
+@media (max-width:700px){
+  html,body{height:auto!important;overflow:visible!important}
+  body{display:block!important;padding:calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 10px) calc(env(safe-area-inset-bottom) + 24px) calc(env(safe-area-inset-left) + 10px)!important;font-size:16px}
+  .wrap,.body{display:block!important;height:auto!important;min-height:0!important}
+  /* thanh trên: giờ + thời tiết trước, rồi cảnh báo, rồi các nút */
+  header{display:block!important;width:100%!important;margin:0 0 10px!important}
+  header .right,header .btns{display:flex!important;flex-wrap:wrap;gap:8px;align-items:center;width:100%}
+  header .hdinfo{order:-3;width:100%;height:auto;margin:0;gap:12px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+  header .hdc{flex:none}
+  header .hdc #clock,header #clock{font-size:44px!important;line-height:1}
+  header #date{font-size:.9rem}header #lunar{font-size:.8rem}
+  header .wxcol{border-left:0;padding-left:0;flex-wrap:wrap;gap:6px 12px;width:100%;justify-content:space-between}
+  header .wxb{flex-wrap:wrap;gap:8px 14px;width:100%;justify-content:space-between}
+  header .wxnow .ic,header .wxnow .tp{font-size:1.6rem}
+  header .wxnow .ds{font-size:.78rem;white-space:normal}
+  header .wxfc{width:100%;justify-content:space-between;font-size:.74rem}
+  header .wxfc>*:nth-child(n+5){display:none}
+  header .btns .alert{order:-2;position:static!important;transform:none!important;width:100%;margin:0!important;text-align:center;padding:9px 12px;font-size:.95rem}
+  header .btns>button,header .btns .thwrap>button{min-height:42px;padding:8px 12px;font-size:.88rem}
+  header .btns>.status{order:5;width:100%;margin:2px 0 0!important;text-align:center;font-size:.75rem}
+  header #btnAuth{margin-left:auto!important;min-width:42px}
+  header .thmenu{min-width:180px}header .thmenu button{padding:12px 16px;font-size:1rem}
+  /* thân: xếp 1 cột, Hôm nay lên đầu */
+  .mid{display:flex!important;flex-direction:column;gap:12px;height:auto!important}
+  .mid #rowInfo,.mid #mainWrap,.mid #grid{display:contents}
+  .mid>*,.mid #grid>*{grid-column:auto!important;grid-row:auto!important}
+  .vsplit,.split,.rowtitle,.grip,.card .grip{display:none!important}
+  .mid #cardToday{order:1}
+  .mid #cardUrgent{order:2}
+  .mid #grid>.list-card{order:3}
+  .mid #cardWeek{order:9}
+  .card,.card.sm,.card.urgent,#grid .card.list-card{height:auto!important;min-height:0!important;padding:16px 16px 14px!important;border-radius:18px}
+  .cb,.ucol,.ucols,.card .cb{overflow:visible!important;max-height:none!important;height:auto!important;font-size:1em!important}
+  .ucols{display:block!important}
+  .card h2,#grid .card.list-card h2{font-size:1.15rem}
+  /* dòng việc: dễ chạm */
+  .row,.ur,#grid .card.list-card .row{padding:11px 4px!important;min-height:48px;align-items:center}
+  .chk,#grid .card.list-card .chk,.wd .li .chk{width:28px!important;height:28px!important;flex:none}
+  .row .t,.ur .ut,#grid .card.list-card .row .t{font-size:1rem!important;line-height:1.35}
+  input[type=text],input:not([type]),select,textarea,form input{font-size:16px!important;min-height:44px}
+  form.add input{padding:10px 12px}
+  .dchip{padding:7px 12px;font-size:.85rem}
+  /* ghi chú trong ô Hôm nay */
+  #cardToday #cardNotes{height:auto!important;min-height:0;overflow:visible}
+  #cardToday #cardNotes .cb{max-height:240px;overflow-y:auto!important}
+  /* việc trong tuần: mỗi ngày 1 hàng dọc */
+  #cardWeek h2{flex-wrap:wrap;gap:8px}
+  #cardWeek form.quick{flex:1 1 100%;margin:0!important}
+  #weekTabs{width:100%;display:flex;gap:6px}#weekTabs button{flex:1;min-height:42px}
+  #weekBody,.wk{display:block!important}
+  .wd{margin-bottom:12px}
+  .wd .li{padding:9px 0;font-size:.98rem}
+  /* hộp sửa ngày/giờ: dạng tờ giấy kéo từ dưới lên */
+  .pop{position:fixed!important;left:8px!important;right:8px!important;top:auto!important;bottom:calc(env(safe-area-inset-bottom) + 8px)!important;width:auto!important;max-height:80vh;overflow:auto;z-index:200;border-radius:18px}
+  .pop button{min-height:42px}
+  .tbanner,.banner{font-size:.9rem}
+}

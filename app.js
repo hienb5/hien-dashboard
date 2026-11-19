@@ -829,7 +829,9 @@ function getView() {
   var v = load('view', null);
   // v26: đồng hồ nay nằm trong khung giờ/thời tiết -> bật lại cho cấu hình cũ đã tắt đồng hồ
   if (v && load('viewv', 0) < 2) { v = JSON.parse(JSON.stringify(v)); v.clock = 1; save('view', v); }
-  save('viewv', 2);
+  // v39: thời tiết nay nằm trên thanh trên cùng (gọn) -> bật lại một lần cho cấu hình cũ đã tắt thời tiết
+  if (v && load('viewv', 0) < 3) { v = JSON.parse(JSON.stringify(v)); v.weather = 1; save('view', v); }
+  save('viewv', 3);
   return v || PRESETS.full;
 }
 var ROWS_DEF = {};
