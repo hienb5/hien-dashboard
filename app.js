@@ -806,8 +806,34 @@ function getView() {
 var ROWS_DEF = {};
 function applyRows() {
   var r = load('rows', {}), root = document.documentElement;
-  ['info', 'week', 'r1', 'r3'].forEach(function (k) {
+  ['info', 'week', 'r1', 'r3', 'notes'].forEach(function (k) {
     if (r[k]) root.style.setProperty('--h-' + k, r[k] + 'px'); else root.style.removeProperty('--h-' + k);
+  });
+}
+function applyCols() {
+  var c = load('cols', {}), root = document.documentElement;
+  [['a', 'la'], ['b', 'lb'], ['h', 'lh']].forEach(function (p) {
+    if (c[p[0]]) root.style.setProperty('--' + p[1], c[p[0]]); else root.style.removeProperty('--' + p[1]);
+  });
+}
+function initCols() {
+  [['splitA', 'a', 17, 9, 30], ['splitB', 'b', 17, 9, 30], ['splitH', 'h', 33, 20, 41]].forEach(function (d) {
+    var bar = $(d[0]);
+    bar.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+      var box = $('mid').getBoundingClientRect();
+      document.body.classList.add('resizing');
+      function mv(ev) {
+        var ln = Math.round((ev.clientX - box.left) / box.width * 48) + 1;
+        ln = Math.max(d[3], Math.min(d[4], ln));
+        var c = load('cols', {}); c[d[1]] = ln;
+        if (d[1] === 'a' || d[1] === 'b') { var hh = c.h || 33; if (ln > hh - 8) c[d[1]] = hh - 8; }
+        save('cols', c); applyCols(); scheduleFit();
+      }
+      function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); document.body.classList.remove('resizing'); }
+      document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+    });
+    bar.addEventListener('dblclick', function () { var c = load('cols', {}); delete c[d[1]]; save('cols', c); applyCols(); scheduleFit(); });
   });
 }
 function initSplit(id, key, sign, target) {
@@ -837,6 +863,7 @@ function applyView() {
   $('rowInfo').classList.toggle('solo', !(v.weather && v.urgent));
   $('mainWrap').hidden = !v.main;
   $('cardWeek').hidden = !v.week;
+  $('mid').classList.toggle('noweek', !v.week);
   $('splitInfo').hidden = !(v.weather || v.urgent || v.clock) || !v.main;
   $('splitWeek').hidden = !v.week || !v.main;
   scheduleFit();
@@ -1183,7 +1210,7 @@ function openSettings() {
 // ---------- khởi động ----------
 function init() {
   initThemes();
-  applyRows(); initSplit('splitInfo', 'r1', 1, 'cardUrgent'); initSplit('splitWeek', 'r3', -1, 'cardWeek');
+  applyRows(); applyCols(); initCols(); initSplit('splitNotes', 'notes', -1, 'cardNotes'); initSplit('splitInfo', 'r1', 1, 'cardUrgent'); initSplit('splitWeek', 'r3', -1, 'cardWeek');
   applyView(); renderQuote(); renderWeather(); fetchWeather();
   setInterval(fetchWeather, 30 * 60 * 1000);
   $('qNext').onclick = function () { qOff++; renderQuote(); };

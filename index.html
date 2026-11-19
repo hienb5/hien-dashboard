@@ -26,10 +26,10 @@
       </div>
       <button id="btnRefresh" class="ghost" title="Làm mới">Làm mới</button>
       <button id="btnSettings" class="ghost" title="Chọn lịch hiển thị">Lịch</button>
+      <div id="status" class="status"></div>
       <div id="alert" class="alert" hidden></div>
       <div class="hdinfo" id="hdinfo">
-    <div class="hdc"><div id="status" class="status"></div>
-    <div class="clk" id="hdLeft">
+    <div class="hdc"><div class="clk" id="hdLeft">
       <div class="tline"><div id="clock">--:--</div><div class="dcol"><div id="date"></div><div id="lunar"></div></div></div>
       <div class="quote" id="quote"><q id="qText"></q><small><span id="qSrc"></span> <button type="button" id="qNext" class="lnk" title="Xem câu khác" aria-label="Xem câu khác">↻</button></small></div>
     </div></div>
@@ -46,7 +46,15 @@
 <div class="wrap">
   <div class="body" id="body">
   <div class="mid" id="mid">
-  <section class="card urgent todaycard" id="cardToday"><div class="ucols" id="todayBody"></div></section>
+  <section class="card urgent todaycard" id="cardToday"><div class="ucols" id="todayBody"></div>
+    <div class="split nsplit" id="splitNotes" title="Kéo để đổi chiều cao Ghi chú (bấm đúp để về mặc định)" role="separator"></div>
+      <section class="card sm notes" id="cardNotes" data-key="notes">
+        <h2><span class="ttl">Ghi chú</span></h2>
+        <div id="notesBody" class="cb"></div>
+        <div id="notesAdd"></div>
+      </section>
+  </section>
+  <div class="vsplit" id="splitA" title="Kéo để đổi chiều rộng (bấm đúp để về mặc định)" role="separator"></div><div class="vsplit" id="splitB" title="Kéo để đổi chiều rộng (bấm đúp để về mặc định)" role="separator"></div><div class="vsplit" id="splitH" title="Kéo để đổi chiều rộng (bấm đúp để về mặc định)" role="separator"></div>
   <section class="info" id="rowInfo">
     <section class="card sm cw" id="cardWx" hidden>
 </section>
@@ -76,11 +84,7 @@
     </h2>
     <div id="weekBody" class="wk"></div>
   </section>
-      <section class="card sm notes" id="cardNotes" data-key="notes">
-        <h2><span class="ttl">Ghi chú</span></h2>
-        <div id="notesBody" class="cb"></div>
-        <div id="notesAdd"></div>
-      </section>
+
   </div>
   </div>
 
