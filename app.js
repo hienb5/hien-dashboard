@@ -55,9 +55,16 @@ function initThemes() {
       var t = b.getAttribute('data-theme-btn');
       try { localStorage.setItem('theme', t); } catch (e) {}
       applyTheme(t);
+      closeThMenu();
     };
   });
+  var bt = $('btnTheme'), mn = $('thMenu');
+  bt.onclick = function (e) { e.stopPropagation(); var open = mn.hidden; mn.hidden = !open; bt.setAttribute('aria-expanded', open ? 'true' : 'false'); };
+  document.addEventListener('click', function (e) { if (!mn.hidden && !mn.contains(e.target)) closeThMenu(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeThMenu(); });
+  $('btnIdle').addEventListener('click', closeThMenu);
 }
+function closeThMenu() { var mn = $('thMenu'); if (mn) { mn.hidden = true; $('btnTheme').setAttribute('aria-expanded', 'false'); } }
 
 // ---------- đồng hồ ----------
 var DAYS = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];

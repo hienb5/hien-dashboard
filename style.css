@@ -587,3 +587,21 @@ header #btnAuth{margin-left:14px}
 .mid #cardNotes{grid-column:10/13;grid-row:3}
 .mid #cardWeek{grid-column:1/9}
 .mid #cardNotes{grid-column:9/13}
+/* v33: 1 nút Giao diện (Sáng/Tối/Đen trắng/Màn hình chờ); Cập nhật nằm trên giờ; màn hình chờ rõ chữ hơn */
+header .thwrap{position:relative}
+header .thmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:60;display:flex;flex-direction:column;min-width:150px;border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+header .thmenu[hidden]{display:none}
+header .thmenu button{border:0;border-radius:0;text-align:left;padding:9px 14px;background:transparent;color:var(--ink);font-size:.9rem}
+header .thmenu button:hover{background:var(--accent-soft)}
+header .thmenu button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+header .thmenu #btnIdle{border-top:1px solid var(--line)}
+header .hdc{display:flex;flex-direction:column;justify-content:center;gap:0;min-width:0}
+header .hdc .status{font-size:.62rem;line-height:1;min-height:0;white-space:nowrap;color:var(--mute);margin:0 0 1px}
+header .hdc #clock{font-size:26px}
+#idle .i-time{color:#EEF4F0;font-weight:400}
+#idle .i-date,#idle .i-cond,#idle .i-fc,#idle .i-quote,#idle .i-tag,#idle .i-time2,#idle .i-day,#idle .i-more,#idle .i-none{color:#C3D1CA}
+#idle .i-temp,#idle .i-it{color:#E6EEEA}
+#idle .i-temp{font-weight:400}
+#idle .i-sec h3{color:#8FBFAE}
+#idle{color:#E6EEEA}
+#idle .i-ctl button{color:#B9C8C0;border-color:#3a4c49}

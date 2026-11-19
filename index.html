@@ -13,23 +13,26 @@
 
 <header>
   <div class="right">
-    <div id="status" class="status"></div>
     <div class="btns">
-      <button id="btnIdle" class="ghost" title="Mở chế độ Màn hình chờ (dùng cho màn hình phụ)">Màn hình chờ</button>
       <button id="btnView" class="ghost" title="Chọn phần hiển thị">☰ Hiển thị</button>
-      <div class="themes" role="group" aria-label="Giao diện">
-        <button type="button" data-theme-btn="light" aria-pressed="false">Sáng</button>
-        <button type="button" data-theme-btn="dark" aria-pressed="false">Tối</button>
-        <button type="button" data-theme-btn="bw" aria-pressed="false">Đen trắng</button>
+      <div class="thwrap">
+        <button id="btnTheme" class="ghost" title="Giao diện / Màn hình chờ" aria-haspopup="true" aria-expanded="false">◐ Giao diện ▾</button>
+        <div class="thmenu themes" id="thMenu" role="group" aria-label="Giao diện" hidden>
+          <button type="button" data-theme-btn="light" aria-pressed="false">Sáng</button>
+          <button type="button" data-theme-btn="dark" aria-pressed="false">Tối</button>
+          <button type="button" data-theme-btn="bw" aria-pressed="false">Đen trắng</button>
+          <button type="button" id="btnIdle" title="Mở chế độ Màn hình chờ (dùng cho màn hình phụ)">Màn hình chờ</button>
+        </div>
       </div>
       <button id="btnRefresh" class="ghost" title="Làm mới">Làm mới</button>
       <button id="btnSettings" class="ghost" title="Chọn lịch hiển thị">Lịch</button>
       <div id="alert" class="alert" hidden></div>
       <div class="hdinfo" id="hdinfo">
+    <div class="hdc"><div id="status" class="status"></div>
     <div class="clk" id="hdLeft">
       <div class="tline"><div id="clock">--:--</div><div class="dcol"><div id="date"></div><div id="lunar"></div></div></div>
       <div class="quote" id="quote"><q id="qText"></q><small><span id="qSrc"></span> <button type="button" id="qNext" class="lnk" title="Xem câu khác" aria-label="Xem câu khác">↻</button></small></div>
-    </div>
+    </div></div>
       <div class="wxcol"><h2><span class="ttl">Thời tiết · Ninh Bình</span></h2>
       <div id="wxBody" class="wxb">Đang tải…</div></div>
           </div>
