@@ -159,12 +159,27 @@ function onToken(resp) {
   localStorage.setItem('signedIn', '1');
   scheduleRenew();
   refresh();
+  saveHint();
+}
+// Ghi nhớ email tài khoản Google đang dùng (id của lịch chính) làm gợi ý khi gia hạn
+function saveHint() {
+  try { if (localStorage.getItem('hint')) return; } catch (e) {}
+  api('GET', CAL + '/calendars/primary').then(function (r) {
+    if (r && r.id && r.id.indexOf('@') > 0) { try { localStorage.setItem('hint', r.id); } catch (e) {} }
+  }).catch(function () {});
 }
 
 // Gia hạn đăng nhập trước khi hết hạn (im lặng nếu trình duyệt cho phép cửa sổ nhỏ của Google)
+// Luôn gợi ý đúng tài khoản Google đã dùng, để không hiện bảng "Chọn tài khoản" khi gia hạn
+function reqTok() {
+  var o = { prompt: '' }, h = '';
+  try { h = localStorage.getItem('hint') || ''; } catch (e) {}
+  if (h) o.hint = h;
+  tokenClient.requestAccessToken(o);
+}
 function renewNow() {
   if (!tokenClient) return;
-  try { tokenClient.requestAccessToken({ prompt: '' }); } catch (e) {}
+  try { reqTok(); } catch (e) {}
 }
 function scheduleRenew() {
   clearTimeout(renewT);
@@ -195,7 +210,7 @@ function initAuth() {
     }
   });
   if (tokenValid()) { scheduleRenew(); refresh(); }
-  else if (localStorage.getItem('signedIn') === '1') { tokenClient.requestAccessToken({ prompt: '' }); }
+  else if (localStorage.getItem('signedIn') === '1') { reqTok(); }
   else { onSignedOut(); }
 }
 window.__gsiReady = initAuth;
@@ -203,7 +218,7 @@ window.__gsiReady = initAuth;
 function signIn() {
   if (!tokenClient) { initAuth(); }
   if (!tokenClient) { banner('Chưa tải được dịch vụ đăng nhập của Google. Kiểm tra kết nối mạng rồi thử lại.', true); return; }
-  tokenClient.requestAccessToken({ prompt: '' });
+  reqTok();
 }
 
 function signOut() {
@@ -273,7 +288,7 @@ function fetchTasks() {
 function refresh() {
   if (busy) return Promise.resolve();
   if (!tokenValid()) {
-    if (tokenClient && localStorage.getItem('signedIn') === '1') tokenClient.requestAccessToken({ prompt: '' });
+    if (tokenClient && localStorage.getItem('signedIn') === '1') reqTok();
     else onSignedOut();
     return Promise.resolve();
   }
@@ -292,7 +307,7 @@ function refresh() {
   }).catch(function (e) {
     if (e && e.code === 401) {
       onSignedOut('');
-      if (tokenClient && localStorage.getItem('signedIn') === '1') tokenClient.requestAccessToken({ prompt: '' });
+      if (tokenClient && localStorage.getItem('signedIn') === '1') reqTok();
       return;
     }
     state.offline = true;

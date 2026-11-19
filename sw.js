@@ -1,4 +1,4 @@
-var CACHE = 'hien-dash-v36';
+var CACHE = 'hien-dash-v37';
 var FILES = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', function (e) {
