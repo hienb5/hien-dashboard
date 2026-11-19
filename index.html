@@ -25,6 +25,14 @@
       <button id="btnRefresh" class="ghost" title="Làm mới">Làm mới</button>
       <button id="btnSettings" class="ghost" title="Chọn lịch hiển thị">Lịch</button>
       <div id="alert" class="alert" hidden></div>
+      <div class="hdinfo" id="hdinfo">
+    <div class="clk" id="hdLeft">
+      <div class="tline"><div id="clock">--:--</div><div class="dcol"><div id="date"></div><div id="lunar"></div></div></div>
+      <div class="quote" id="quote"><q id="qText"></q><small><span id="qSrc"></span> <button type="button" id="qNext" class="lnk" title="Xem câu khác" aria-label="Xem câu khác">↻</button></small></div>
+    </div>
+      <div class="wxcol"><h2><span class="ttl">Thời tiết · Ninh Bình</span></h2>
+      <div id="wxBody" class="wxb">Đang tải…</div></div>
+          </div>
       <button id="btnAuth" class="primary" title="Đăng nhập Google">Đăng nhập Google</button>
     </div>
   </div>
@@ -34,17 +42,11 @@
 
 <div class="wrap">
   <div class="body" id="body">
-  <section class="card urgent todaycard" id="cardToday"><div class="ucols" id="todayBody"></div></section>
   <div class="mid" id="mid">
+  <section class="card urgent todaycard" id="cardToday"><div class="ucols" id="todayBody"></div></section>
   <section class="info" id="rowInfo">
-    <section class="card sm cw" id="cardWx">
-    <div class="clk" id="hdLeft">
-      <div class="tline"><div id="clock">--:--</div><div class="dcol"><div id="date"></div><div id="lunar"></div></div></div>
-      <div class="quote" id="quote"><q id="qText"></q><small><span id="qSrc"></span> <button type="button" id="qNext" class="lnk" title="Xem câu khác" aria-label="Xem câu khác">↻</button></small></div>
-    </div>
-      <div class="wxcol"><h2><span class="ttl">Thời tiết · Ninh Bình</span></h2>
-      <div id="wxBody" class="wxb">Đang tải…</div></div>
-    </section>
+    <section class="card sm cw" id="cardWx" hidden>
+</section>
     <section class="card urgent" id="cardUrgent">
       <div class="ucols" id="urgentBody"></div>
     </section>
